@@ -9,7 +9,10 @@ export type Theme =
   | 'solarized-light' 
   | 'solarized-dark' 
   | 'monokai' 
-  | 'one-light';
+  | 'one-light'
+  | 'soft-light'
+  | 'cream-light'
+  | 'blue-light';
 
 type Props = {
   theme: Theme;
@@ -17,6 +20,9 @@ type Props = {
 };
 
 const themes: { value: Theme; label: string; category: 'light' | 'dark' }[] = [
+  { value: 'soft-light', label: 'Soft Light', category: 'light' },
+  { value: 'cream-light', label: 'Cream Light', category: 'light' },
+  { value: 'blue-light', label: 'Blue Light', category: 'light' },
   { value: 'github-light', label: 'GitHub Light', category: 'light' },
   { value: 'one-light', label: 'One Light', category: 'light' },
   { value: 'solarized-light', label: 'Solarized Light', category: 'light' },

@@ -13,7 +13,9 @@ import SessionManager, { type TranslationSession } from "@/components/SessionMan
 import GuidelinesUploader from "@/components/GuidelinesUploader";
 import ReferenceMaterialUploader from "@/components/ReferenceMaterialUploader";
 import LanguageSelector, { type Language } from "@/components/LanguageSelector";
+import ApiKeySettings from "@/components/ApiKeySettings";
 import { checkGuardrails, validateEditedText, buildReEnforcementPrompt } from "@/lib/guardrails";
+import { processTranslationAPI } from "@/lib/api-client";
 import type { HighlightType } from "@/lib/hemingway";
 import type { Theme } from "@/components/ThemeSelector";
 
@@ -33,6 +35,8 @@ export default function Page() {
   const [showReferenceMaterial, setShowReferenceMaterial] = useState(false);
   const [referenceMaterial, setReferenceMaterial] = useState("");
   const [theme, setTheme] = useState<Theme>('dark');
+  const [showApiKeySettings, setShowApiKeySettings] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [promptSettings, setPromptSettings] = useState({
     override: "",
     knobs: {
@@ -136,6 +140,22 @@ export default function Page() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Check for API key on mount
+  useEffect(() => {
+    const checkApiKey = async () => {
+      if (window.electronAPI) {
+        try {
+          const apiKey = await window.electronAPI.getApiKey();
+          setHasApiKey(!!apiKey);
+        } catch (error) {
+          console.error('Failed to check API key:', error);
+          setHasApiKey(false);
+        }
+      }
+    };
+    checkApiKey();
+  }, []);
+
   // Load auto-saved work and materials on mount
   useEffect(() => {
     const autoSave = localStorage.getItem('translation-autosave');
@@ -172,6 +192,17 @@ export default function Page() {
   }, []);
 
   const onRun = useCallback(async (isRetry = false) => {
+    // Check if API key is configured (only in Electron)
+    if (window.electronAPI && !hasApiKey) {
+      addToast({
+        type: "error",
+        title: "API Key Required",
+        description: "Please configure your OpenAI API key in settings before translating."
+      });
+      setShowApiKeySettings(true);
+      return;
+    }
+
     // Get banned terms from localStorage
     const bannedTermsText = localStorage.getItem("bannedTerms") || "";
     const bannedTerms = bannedTermsText.split("\n").map(t => t.trim()).filter(Boolean);
@@ -205,27 +236,20 @@ export default function Page() {
       const sourceText = sourceLanguage === 'hebrew' ? hebrew : (sourceLanguage === 'english' ? roughEnglish : hebrew);
       const roughText = useRoughEnglish ? roughEnglish : undefined;
       
-      const res = await fetch("/api/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          hebrew: sourceLanguage === 'hebrew' ? sourceText : '', 
-          roughEnglish: useRoughEnglish ? roughText : (sourceLanguage === 'english' ? sourceText : ''), 
-          model, 
-          ...promptSettings,
-          glossary,
-          isRetry,
-          bannedTerms,
-          guidelines,
-          referenceMaterial,
-          sourceLanguage,
-          targetLanguage,
-          conversationHistory: conversationHistory.slice(-5) // Send last 5 conversations for context
-        }),
-        signal: ac.signal
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+      const json = await processTranslationAPI({ 
+        hebrew: sourceLanguage === 'hebrew' ? sourceText : '', 
+        roughEnglish: useRoughEnglish ? roughText : (sourceLanguage === 'english' ? sourceText : ''), 
+        model, 
+        ...promptSettings,
+        glossary,
+        isRetry,
+        bannedTerms,
+        guidelines,
+        referenceMaterial,
+        sourceLanguage,
+        targetLanguage,
+        conversationHistory: conversationHistory.slice(-5) // Send last 5 conversations for context
+      }, ac.signal);
 
       const newEditedText = json.edited_text || "";
       setEditedText(newEditedText);
@@ -278,7 +302,7 @@ export default function Page() {
     } finally {
       setPending(false);
     }
-  }, [hebrew, roughEnglish, model, promptSettings, glossary, addToast]);
+  }, [hebrew, roughEnglish, model, promptSettings, glossary, addToast, hasApiKey]);
 
   const onClear = () => {
     abortRef.current?.abort();
@@ -322,8 +346,10 @@ export default function Page() {
         onOpenSessionManager={() => setShowSessionManager(true)}
         onOpenGuidelinesUploader={() => setShowGuidelinesUploader(true)}
         onOpenReferenceMaterial={() => setShowReferenceMaterial(true)}
+        onOpenApiKeySettings={() => setShowApiKeySettings(true)}
         theme={theme}
         onThemeChange={setTheme}
+        hasApiKey={hasApiKey}
         onClear={() => {
           onClear();
           setPromptSettings({
@@ -632,6 +658,12 @@ export default function Page() {
         currentReferenceMaterial={referenceMaterial}
         open={showReferenceMaterial}
         onOpenChange={setShowReferenceMaterial}
+      />
+
+      <ApiKeySettings 
+        isOpen={showApiKeySettings}
+        onClose={() => setShowApiKeySettings(false)}
+        onApiKeyChange={setHasApiKey}
       />
     </div>
   );

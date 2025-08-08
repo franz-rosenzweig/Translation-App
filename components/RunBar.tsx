@@ -11,12 +11,14 @@ type Props = {
   onOpenSessionManager?: () => void;
   onOpenGuidelinesUploader?: () => void;
   onOpenReferenceMaterial?: () => void;
+  onOpenApiKeySettings?: () => void;
   pending?: boolean;
   theme?: Theme;
   onThemeChange?: (theme: Theme) => void;
+  hasApiKey?: boolean;
 };
 
-export default function RunBar({ model, setModel, onRun, onClear, onOpenPromptDrawer, onOpenSessionManager, onOpenGuidelinesUploader, onOpenReferenceMaterial, pending, theme = 'dark', onThemeChange }: Props) {
+export default function RunBar({ model, setModel, onRun, onClear, onOpenPromptDrawer, onOpenSessionManager, onOpenGuidelinesUploader, onOpenReferenceMaterial, onOpenApiKeySettings, pending, theme = 'dark', onThemeChange, hasApiKey }: Props) {
   return (
     <div className="flex items-center justify-between gap-4 p-3 border-b border-default bg-panel sticky top-0 z-10">
       <div className="flex items-center gap-2">
@@ -37,6 +39,19 @@ export default function RunBar({ model, setModel, onRun, onClear, onOpenPromptDr
         
         {/* Theme Selector */}
         <ThemeSelector theme={theme} onThemeChange={onThemeChange || (() => {})} />
+        
+        {/* API Key Settings */}
+        <button
+          className={`px-3 py-1.5 rounded border text-sm flex items-center gap-2 ${
+            hasApiKey 
+              ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-900/30' 
+              : 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-900/30'
+          }`}
+          onClick={onOpenApiKeySettings}
+        >
+          <div className={`w-2 h-2 rounded-full ${hasApiKey ? 'bg-green-500' : 'bg-orange-500'}`} />
+          API Key
+        </button>
         
         <button
           className="px-3 py-1.5 rounded bg-panel border border-default hover:bg-accent/10 text-sm"

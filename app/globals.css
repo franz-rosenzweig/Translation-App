@@ -79,6 +79,39 @@ html.one-light {
   color-scheme: light;
 }
 
+/* Soft Light - Easy on the eyes */
+html.soft-light {
+  --accent: rgb(52, 168, 83);
+  --background: rgb(248, 249, 250);
+  --panel: rgb(243, 244, 246);
+  --muted: rgb(107, 114, 126);
+  --text: rgb(55, 65, 81);
+  --border: rgb(229, 231, 235);
+  color-scheme: light;
+}
+
+/* Cream Light - Warm and comfortable */
+html.cream-light {
+  --accent: rgb(168, 85, 52);
+  --background: rgb(254, 252, 248);
+  --panel: rgb(250, 245, 238);
+  --muted: rgb(120, 113, 108);
+  --text: rgb(68, 64, 60);
+  --border: rgb(231, 229, 228);
+  color-scheme: light;
+}
+
+/* Blue Light - Cool and calm */
+html.blue-light {
+  --accent: rgb(59, 130, 246);
+  --background: rgb(248, 250, 252);
+  --panel: rgb(241, 245, 249);
+  --muted: rgb(100, 116, 139);
+  --text: rgb(51, 65, 85);
+  --border: rgb(226, 232, 240);
+  color-scheme: light;
+}
+
 body {
   background-color: var(--background);
   color: var(--text);

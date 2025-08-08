@@ -1,7 +1,9 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCallback, useEffect, useState } from "react";
+import { HelpCircle } from "lucide-react";
 import BannedTermsConfig from "./BannedTermsConfig";
 import { saveMaterials, getMaterials } from '@/lib/storage';
 
@@ -121,21 +123,22 @@ export default function PromptDrawer({ open, onOpenChange, onApply }: Props) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-0 right-0 h-full w-full max-w-md bg-panel border-l border-default focus:outline-none flex flex-col">
-          <div className="flex-shrink-0 px-6 py-4 border-b border-default">
-            <Dialog.Title className="text-lg font-semibold mb-2">Prompt Drawer</Dialog.Title>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+        <Dialog.Content className="fixed top-0 right-0 h-full w-full max-w-md bg-panel border-l border-default focus:outline-none flex flex-col z-50">
+          <div className="flex-shrink-0 px-6 pt-8 pb-6 border-b border-default">
+            <Dialog.Title className="text-lg font-semibold mb-3">Prompt Drawer</Dialog.Title>
             <Dialog.Description className="text-sm text-muted leading-relaxed">
               Fine-tune the system prompt used for translation editing.
-              Changes apply to future runs only.
+              <br />
+              <span className="mt-2 block">Changes apply to future runs only.</span>
             </Dialog.Description>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-              <div className="space-y-2">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+              <div className="space-y-3">
                 <label className="block text-sm font-medium">Override Text</label>
                 <textarea
-                  className="w-full h-64 bg-panel border border-neutral-800 rounded p-3 text-sm font-mono"
+                  className="w-full h-48 bg-panel border border-default rounded p-4 text-sm font-mono leading-relaxed"
                   value={override}
                   onChange={(e) => setOverride(e.target.value)}
                   placeholder="Enter additional instructions or modifications to the base prompt..."
@@ -143,12 +146,32 @@ export default function PromptDrawer({ open, onOpenChange, onApply }: Props) {
               </div>
 
               {/* Knobs */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="text-sm font-medium">Translation Settings</div>
                 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
-                    <label className="text-sm">Americanization (Level {knobs.americanization}/10)</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium">Americanization (Level {knobs.americanization}/10)</label>
+                      <Tooltip.Provider>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted hover:text-foreground cursor-help" />
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content className="bg-panel border border-default rounded p-3 text-sm max-w-xs shadow-lg z-50">
+                              <div className="space-y-1">
+                                <div className="font-medium">Americanization Level</div>
+                                <div>1-3: Preserve original phrasing and cultural references</div>
+                                <div>4-7: Moderate adaptation for American readers</div>
+                                <div>8-10: Strong American idioms, measurements, and cultural adaptation</div>
+                              </div>
+                              <Tooltip.Arrow className="fill-panel" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    </div>
                     <input
                       type="range"
                       min="1"
@@ -160,7 +183,27 @@ export default function PromptDrawer({ open, onOpenChange, onApply }: Props) {
                   </div>
                   
                   <div>
-                    <label className="text-sm">Structure Strictness (Level {knobs.structureStrictness}/10)</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium">Structure Strictness (Level {knobs.structureStrictness}/10)</label>
+                      <Tooltip.Provider>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted hover:text-foreground cursor-help" />
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content className="bg-panel border border-default rounded p-3 text-sm max-w-xs shadow-lg z-50">
+                              <div className="space-y-1">
+                                <div className="font-medium">Structure Adherence</div>
+                                <div>1-3: Allow flexible sentence restructuring for clarity</div>
+                                <div>4-7: Maintain general paragraph and sentence flow</div>
+                                <div>8-10: Preserve exact sentence order and structure</div>
+                              </div>
+                              <Tooltip.Arrow className="fill-panel" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    </div>
                     <input
                       type="range"
                       min="1"
@@ -172,7 +215,27 @@ export default function PromptDrawer({ open, onOpenChange, onApply }: Props) {
                   </div>
                   
                   <div>
-                    <label className="text-sm">Tone Strictness (Level {knobs.toneStrictness}/10)</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium">Tone Strictness (Level {knobs.toneStrictness}/10)</label>
+                      <Tooltip.Provider>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted hover:text-foreground cursor-help" />
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content className="bg-panel border border-default rounded p-3 text-sm max-w-xs shadow-lg z-50">
+                              <div className="space-y-1">
+                                <div className="font-medium">Tone Matching</div>
+                                <div>1-3: Natural English tone, adapt for readability</div>
+                                <div>4-7: Balance original tone with target language conventions</div>
+                                <div>8-10: Preserve exact original tone and authorial voice</div>
+                              </div>
+                              <Tooltip.Arrow className="fill-panel" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    </div>
                     <input
                       type="range"
                       min="1"
@@ -184,7 +247,27 @@ export default function PromptDrawer({ open, onOpenChange, onApply }: Props) {
                   </div>
                   
                   <div>
-                    <label className="text-sm">Jargon Tolerance (Level {knobs.jargonTolerance}/10)</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="text-sm font-medium">Jargon Tolerance (Level {knobs.jargonTolerance}/10)</label>
+                      <Tooltip.Provider>
+                        <Tooltip.Root>
+                          <Tooltip.Trigger asChild>
+                            <HelpCircle className="w-4 h-4 text-muted hover:text-foreground cursor-help" />
+                          </Tooltip.Trigger>
+                          <Tooltip.Portal>
+                            <Tooltip.Content className="bg-panel border border-default rounded p-3 text-sm max-w-xs shadow-lg z-50">
+                              <div className="space-y-1">
+                                <div className="font-medium">Technical Language Handling</div>
+                                <div>1-3: Simplify technical terms, explain jargon</div>
+                                <div>4-7: Keep moderate technical language, clarify when needed</div>
+                                <div>8-10: Preserve all original technical terminology and jargon</div>
+                              </div>
+                              <Tooltip.Arrow className="fill-panel" />
+                            </Tooltip.Content>
+                          </Tooltip.Portal>
+                        </Tooltip.Root>
+                      </Tooltip.Provider>
+                    </div>
                     <input
                       type="range"
                       min="1"

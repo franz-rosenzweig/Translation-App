@@ -1,4 +1,5 @@
 // Utility functions for analyzing text readability and generating Hemingway-style highlights
+import { analyzeReadability } from './hemingway';
 
 // Matches sentences ending with period, question mark, or exclamation point followed by space
 const sentenceRegex = /[^.!?]+[.!?]\s+/g;

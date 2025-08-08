@@ -4,10 +4,18 @@
   "description": "Professional Hebrew-English AI Translation Editor with Style Awareness",
   "private": true,
   "type": "module",
+  "main": "main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "electron": "electron .",
+    "electron-dev": "NODE_ENV=development electron .",
+    "app-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && npm run electron-dev\"",
+    "build-electron": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish=never",
+    "dist-mac": "npm run build && electron-builder --mac --publish=never",
+    "pack": "npm run build && electron-builder --dir"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
@@ -27,13 +35,61 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/electron": "^1.4.38",
     "@types/node": "^24.2.0",
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.0",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "png2icons": "^2.0.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "wait-on": "^8.0.4"
+  },
+  "build": {
+    "appId": "com.translation-chat.app",
+    "productName": "Translation Chat",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "out/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": {
+        "target": "dmg",
+        "arch": "arm64"
+      },
+      "icon": "assets/icon.icns"
+    },
+    "dmg": {
+      "title": "${productName}",
+      "icon": "assets/icon.icns",
+      "window": {
+        "width": 600,
+        "height": 400
+      },
+      "contents": [
+        {
+          "x": 150,
+          "y": 180,
+          "type": "file"
+        },
+        {
+          "x": 450,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "background": null
+    }
   }
 }
