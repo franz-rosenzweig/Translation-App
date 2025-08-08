@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+
+# Next.js
+.next/
+out/
+
+# Builds
+dist/
+build/
+coverage/
+
+# OS/Editor
+.DS_Store
+*.swp
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
