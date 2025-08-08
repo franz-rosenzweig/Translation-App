@@ -43,14 +43,31 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { hebrew, roughEnglish, style, promptOverride, knobs, glossary, model, isRetry, bannedTerms } = body;
+    const { 
+      hebrew, 
+      roughEnglish, 
+      style, 
+      promptOverride, 
+      knobs, 
+      glossary, 
+      model, 
+      isRetry, 
+      bannedTerms,
+      guidelines,
+      sourceLanguage,
+      targetLanguage,
+      conversationHistory
+    } = body;
 
-    if (!hebrew?.trim() || !roughEnglish?.trim()) {
-      return NextResponse.json({ error: "Missing hebrew or roughEnglish text" }, { status: 400 });
+    // Determine source text based on language selection
+    const sourceText = sourceLanguage === 'hebrew' ? hebrew : roughEnglish;
+    
+    if (!sourceText?.trim()) {
+      return NextResponse.json({ error: "Missing source text" }, { status: 400 });
     }
 
-    if (hebrew.length > 10000 || roughEnglish.length > 10000) {
-      return NextResponse.json({ error: "Text too long (max 10000 chars)" }, { status: 400 });
+    if (hebrew.length > 15000 || roughEnglish.length > 15000) {
+      return NextResponse.json({ error: "Text too long (max 15000 chars)" }, { status: 400 });
     }
 
     if (glossary && (!Array.isArray(glossary) || glossary.length > 100)) {
@@ -70,11 +87,15 @@ export async function POST(req: Request) {
 
     const messages = composePrompt({
       hebrew,
-      roughEnglish,
+      roughEnglish: roughEnglish || "",
       style,
       promptOverride: promptOverride + (enforcementPrompt ? `\n\n${enforcementPrompt}` : ""),
       knobs,
       glossary,
+      guidelines,
+      sourceLanguage,
+      targetLanguage,
+      conversationHistory
     });
 
     const response = await callOpenAI(messages, ac.signal);

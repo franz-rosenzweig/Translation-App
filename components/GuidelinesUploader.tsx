@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Upload, FileText, X } from 'lucide-react';
+import * as Dialog from "@radix-ui/react-dialog";
 
 interface GuidelinesUploaderProps {
   onGuidelinesChange: (guidelines: string) => void;
   currentGuidelines?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelines }: GuidelinesUploaderProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelines, open = false, onOpenChange }: GuidelinesUploaderProps) {
   const [guidelines, setGuidelines] = useState(currentGuidelines || '');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,72 +53,68 @@ export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelin
     onGuidelinesChange(defaultGuidelines);
   };
 
-  if (!isOpen) {
-    return (
-      <div className="flex items-center gap-2 mb-4">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <FileText className="w-4 h-4" />
-          Translation Guidelines {currentGuidelines ? '✓' : ''}
-        </button>
-      </div>
-    );
+  if (!open) {
+    return null;
   }
 
   return (
-    <div className="border rounded-lg p-4 mb-4 bg-gray-50 dark:bg-gray-900">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">Translation Guidelines</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={loadDefaultGuidelines}
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            Load Default
-          </button>
-          <input
-            type="file"
-            accept=".md,.txt"
-            onChange={handleFileUpload}
-            className="hidden"
-            id="guidelines-upload"
-          />
-          <label
-            htmlFor="guidelines-upload"
-            className="flex items-center gap-1 px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-          >
-            <Upload className="w-4 h-4" />
-            Upload
-          </label>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] bg-panel border border-neutral-800 rounded-lg p-6 focus:outline-none overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog.Title className="text-lg font-semibold">Translation Guidelines</Dialog.Title>
+            <button
+              onClick={() => onOpenChange?.(false)}
+              className="px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Guidelines (Markdown supported)
-          </label>
-          <textarea
-            value={guidelines}
-            onChange={handleTextChange}
-            className="w-full h-64 p-3 border rounded-md bg-white dark:bg-gray-800 font-mono text-sm"
-            placeholder="Enter your translation guidelines here, or upload a markdown file..."
-          />
-        </div>
-        
-        <div className="text-sm text-muted-foreground">
-          <p>These guidelines will be included in the AI prompt to ensure consistent translation style.</p>
-          <p>You can upload a .md or .txt file, or edit the text directly.</p>
-        </div>
-      </div>
-    </div>
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={loadDefaultGuidelines}
+              className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              Load Default
+            </button>
+            <input
+              type="file"
+              accept=".md,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="guidelines-upload"
+            />
+            <label
+              htmlFor="guidelines-upload"
+              className="flex items-center gap-1 px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              Upload
+            </label>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Guidelines (Markdown supported)
+              </label>
+              <textarea
+                value={guidelines}
+                onChange={handleTextChange}
+                className="w-full h-64 p-3 border rounded-md bg-white dark:bg-gray-800 font-mono text-sm"
+                placeholder="Enter your translation guidelines here, or upload a markdown file..."
+              />
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              <p>These guidelines will be included in the AI prompt to ensure consistent translation style.</p>
+              <p>You can upload a .md or .txt file, or edit the text directly.</p>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

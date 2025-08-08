@@ -26,6 +26,8 @@ export default function Page() {
   const [editedText, setEditedText] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false);
+  const [showSessionManager, setShowSessionManager] = useState(false);
+  const [showGuidelinesUploader, setShowGuidelinesUploader] = useState(false);
   const [promptSettings, setPromptSettings] = useState({
     override: "",
     knobs: {
@@ -126,6 +128,11 @@ export default function Page() {
           setRoughEnglish(parsed.roughEnglish || "");
           setEditedText(parsed.editedText || "");
           setModel(parsed.model || "gpt-4");
+          setGuidelines(parsed.guidelines || "");
+          setSourceLanguage(parsed.sourceLanguage || "hebrew");
+          setTargetLanguage(parsed.targetLanguage || "english");
+          setUseRoughEnglish(parsed.useRoughEnglish || false);
+          setConversationHistory(parsed.conversationHistory || []);
           if (parsed.hebrew || parsed.roughEnglish || parsed.editedText) {
             addToast({ description: "Restored previous work", type: "info" });
           }
@@ -166,17 +173,25 @@ export default function Page() {
     setBannedTermsViolations([]);
     
     try {
+      // Prepare the source text based on language selection
+      const sourceText = sourceLanguage === 'hebrew' ? hebrew : (sourceLanguage === 'english' ? roughEnglish : hebrew);
+      const roughText = useRoughEnglish ? roughEnglish : undefined;
+      
       const res = await fetch("/api/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          hebrew, 
-          roughEnglish, 
+          hebrew: sourceLanguage === 'hebrew' ? sourceText : '', 
+          roughEnglish: useRoughEnglish ? roughText : (sourceLanguage === 'english' ? sourceText : ''), 
           model, 
           ...promptSettings,
           glossary,
           isRetry,
-          bannedTerms
+          bannedTerms,
+          guidelines,
+          sourceLanguage,
+          targetLanguage,
+          conversationHistory: conversationHistory.slice(-5) // Send last 5 conversations for context
         }),
         signal: ac.signal
       });
@@ -185,6 +200,18 @@ export default function Page() {
 
       const newEditedText = json.edited_text || "";
       setEditedText(newEditedText);
+      
+      // Add to conversation history
+      const historyEntry = {
+        id: Date.now().toString(),
+        timestamp: Date.now(),
+        sourceText,
+        roughText,
+        result: newEditedText,
+        sourceLanguage,
+        targetLanguage
+      };
+      setConversationHistory(prev => [historyEntry, ...prev.slice(0, 19)]); // Keep last 20 entries
       
       // Check for banned terms in the output
       if (bannedTerms.length > 0) {
@@ -262,6 +289,9 @@ export default function Page() {
         model={model} 
         setModel={setModel} 
         onRun={() => onRun()} 
+        onOpenPromptDrawer={() => setPromptDrawerOpen(true)}
+        onOpenSessionManager={() => setShowSessionManager(true)}
+        onOpenGuidelinesUploader={() => setShowGuidelinesUploader(true)}
         onClear={() => {
           onClear();
           setPromptSettings({
@@ -287,7 +317,6 @@ export default function Page() {
           });
         }}
         pending={pending}
-        onOpenPromptDrawer={() => setPromptDrawerOpen(true)}
       />
       <Toasts toasts={toasts} />
       
@@ -319,42 +348,72 @@ export default function Page() {
       )}
 
       <main className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
-        {/* Session Management */}
-        <div className="lg:col-span-2">
-          <SessionManager 
-            currentSession={getCurrentSession()}
-            onLoadSession={handleLoadSession}
-            onSaveSession={handleSaveSession}
-            onNewSession={handleNewSession}
-          />
-        </div>
-        
         {/* Left: Inputs */}
         <section className="space-y-3">
           <div className="space-y-1">
-            <div className="input-label">Hebrew (source)</div>
+            <div className="flex items-center justify-between">
+              <div className="input-label">Source Text</div>
+              <LanguageSelector 
+                value={sourceLanguage}
+                onChange={setSourceLanguage}
+              />
+            </div>
             <textarea
-              dir="rtl"
-              className="w-full h-48 bg-panel border border-neutral-800 rounded p-2"
+              dir={sourceLanguage === 'hebrew' ? 'rtl' : 'ltr'}
+              className="w-full h-64 bg-panel border border-neutral-800 rounded p-2"
               value={hebrew}
               onChange={(e) => setHebrew(e.target.value)}
-              placeholder="הדבק כאן טקסט בעברית…"
+              placeholder={sourceLanguage === 'hebrew' ? "הדבק כאן טקסט בעברית…" : "Paste English text here..."}
+              maxLength={15000}
             ></textarea>
-            <div className="text-xs text-muted mt-1">
-              {hebrew.length} characters, {hebrew.trim().split(/\s+/).length} words
+            <div className="flex items-center justify-between text-xs text-muted mt-1">
+              <span>{hebrew.length}/15,000 characters, {hebrew.trim().split(/\s+/).length} words</span>
+              <div className={`px-2 py-1 rounded text-xs ${hebrew.length > 12000 ? 'bg-red-100 text-red-600' : hebrew.length > 8000 ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'}`}>
+                {((hebrew.length / 15000) * 100).toFixed(0)}% used
+              </div>
             </div>
           </div>
+          
+          {/* Optional Rough Translation */}
           <div className="space-y-1">
-            <div className="input-label">Rough English</div>
-            <textarea
-              className="w-full h-48 bg-panel border border-neutral-800 rounded p-2"
-              value={roughEnglish}
-              onChange={(e) => setRoughEnglish(e.target.value)}
-              placeholder="Paste the rough English here…"
-            ></textarea>
-            <div className="text-xs text-muted mt-1">
-              {roughEnglish.length} characters, {roughEnglish.trim().split(/\s+/).length} words
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="use-rough"
+                  checked={useRoughEnglish}
+                  onChange={(e) => setUseRoughEnglish(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="use-rough" className="input-label cursor-pointer">
+                  Rough Translation (Optional)
+                </label>
+              </div>
+              {useRoughEnglish && (
+                <LanguageSelector 
+                  value={targetLanguage}
+                  onChange={setTargetLanguage}
+                />
+              )}
             </div>
+            {useRoughEnglish && (
+              <>
+                <textarea
+                  dir={targetLanguage === 'hebrew' ? 'rtl' : 'ltr'}
+                  className="w-full h-48 bg-panel border border-neutral-800 rounded p-2"
+                  value={roughEnglish}
+                  onChange={(e) => setRoughEnglish(e.target.value)}
+                  placeholder={targetLanguage === 'hebrew' ? "טיוטה בעברית..." : "Rough translation here..."}
+                  maxLength={15000}
+                />
+                <div className="flex items-center justify-between text-xs text-muted mt-1">
+                  <span>{roughEnglish.length}/15,000 characters, {roughEnglish.trim().split(/\s+/).length} words</span>
+                  <div className={`px-2 py-1 rounded text-xs ${roughEnglish.length > 12000 ? 'bg-red-100 text-red-600' : roughEnglish.length > 8000 ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'}`}>
+                    {((roughEnglish.length / 15000) * 100).toFixed(0)}% used
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <GlossaryUpload onGlossaryChange={setGlossary} />
         </section>
@@ -431,11 +490,110 @@ export default function Page() {
                 )
               },
               { value: "readability", label: "Readability", content: <ReadabilityPane text={editedText} onHighlightToggle={setEnabledHighlights} onTextChange={setEditedText} /> },
+              { 
+                value: "history", 
+                label: `History (${conversationHistory.length})`, 
+                content: (
+                  <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
+                    {conversationHistory.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        No conversation history yet
+                      </div>
+                    ) : (
+                      conversationHistory.map((entry, index) => (
+                        <div key={entry.id} className="border rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>#{conversationHistory.length - index}</span>
+                            <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                            <span>{entry.sourceLanguage} → {entry.targetLanguage}</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div>
+                              <div className="text-xs font-medium mb-1">Source:</div>
+                              <div className="text-sm bg-gray-100 dark:bg-gray-800 rounded p-2" dir={entry.sourceLanguage === 'hebrew' ? 'rtl' : 'ltr'}>
+                                {entry.sourceText.substring(0, 200)}{entry.sourceText.length > 200 ? '...' : ''}
+                              </div>
+                            </div>
+                            
+                            {entry.roughText && (
+                              <div>
+                                <div className="text-xs font-medium mb-1">Rough:</div>
+                                <div className="text-sm bg-gray-100 dark:bg-gray-800 rounded p-2" dir={entry.targetLanguage === 'hebrew' ? 'rtl' : 'ltr'}>
+                                  {entry.roughText.substring(0, 200)}{entry.roughText.length > 200 ? '...' : ''}
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div>
+                              <div className="text-xs font-medium mb-1">Result:</div>
+                              <div className="text-sm bg-green-50 dark:bg-green-900/20 rounded p-2" dir={entry.targetLanguage === 'hebrew' ? 'rtl' : 'ltr'}>
+                                {entry.result.substring(0, 200)}{entry.result.length > 200 ? '...' : ''}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setHebrew(entry.sourceLanguage === 'hebrew' ? entry.sourceText : '');
+                                if (entry.roughText) {
+                                  setRoughEnglish(entry.roughText);
+                                  setUseRoughEnglish(true);
+                                }
+                                setSourceLanguage(entry.sourceLanguage);
+                                setTargetLanguage(entry.targetLanguage);
+                              }}
+                              className="px-2 py-1 text-xs border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                              Load Input
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditedText(entry.result);
+                              }}
+                              className="px-2 py-1 text-xs border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                              Load Result
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(entry.result);
+                                addToast({ description: "Copied to clipboard!", type: "success" });
+                              }}
+                              className="px-2 py-1 text-xs border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )
+              },
               { value: "diff", label: "Diff", content: <DiffView original={roughEnglish} edited={editedText} /> }
             ]}
           />
         </section>
       </main>
+
+      {/* Modal components */}
+      <SessionManager 
+        currentSession={getCurrentSession()}
+        onLoadSession={handleLoadSession}
+        onSaveSession={handleSaveSession}
+        onNewSession={handleNewSession}
+        open={showSessionManager}
+        onOpenChange={setShowSessionManager}
+      />
+      
+      <GuidelinesUploader 
+        onGuidelinesChange={setGuidelines}
+        currentGuidelines={guidelines}
+        open={showGuidelinesUploader}
+        onOpenChange={setShowGuidelinesUploader}
+      />
     </div>
   );
 }

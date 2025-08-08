@@ -35,7 +35,11 @@ export function composePrompt({
   style = "default",
   promptOverride = "",
   knobs = {},
-  glossary = []
+  glossary = [],
+  guidelines = "",
+  sourceLanguage = "hebrew",
+  targetLanguage = "english", 
+  conversationHistory = []
 }: {
   hebrew: string;
   roughEnglish: string;
@@ -43,23 +47,42 @@ export function composePrompt({
   promptOverride?: string;
   knobs?: Record<string, unknown>;
   glossary?: Array<{ hebrew: string; chosen_english: string; note?: string }>;
+  guidelines?: string;
+  sourceLanguage?: string;
+  targetLanguage?: string;
+  conversationHistory?: Array<any>;
 }) {
+  const sourceText = sourceLanguage === 'hebrew' ? hebrew : roughEnglish;
+  const targetText = sourceLanguage === 'hebrew' ? roughEnglish : hebrew;
+  
+  // Build conversation context from history
+  const historyContext = conversationHistory.length > 0 
+    ? `\n\nRecent conversation context (for reference only):\n${conversationHistory.slice(0, 3).map((entry: any, i: number) => 
+        `${i + 1}. ${entry.sourceLanguage} → ${entry.targetLanguage}: "${entry.sourceText.substring(0, 100)}..." → "${entry.result.substring(0, 100)}..."`
+      ).join('\n')}`
+    : '';
+
   const messages = [
     {
       role: "system" as const,
       content: [
         baseSystemPrompt,
+        guidelines ? `\n\nTranslation Guidelines:\n${guidelines}` : "",
         promptOverride,
         style !== "default" ? `Style: ${style}` : "",
         glossary.length ? `Glossary terms: ${JSON.stringify(glossary)}` : "",
         Object.keys(knobs).length ? `Settings: ${JSON.stringify(knobs)}` : "",
+        `Translation direction: ${sourceLanguage} → ${targetLanguage}`,
+        historyContext
       ]
         .filter(Boolean)
         .join("\n\n"),
     },
     {
       role: "user" as const,
-      content: `Hebrew source:\n${hebrew}\n\nRough English:\n${roughEnglish}`,
+      content: sourceLanguage === 'hebrew' 
+        ? `Hebrew source:\n${sourceText}${targetText ? `\n\nRough ${targetLanguage}:\n${targetText}` : ''}`
+        : `${sourceLanguage} source:\n${sourceText}${targetText ? `\n\nRough ${targetLanguage}:\n${targetText}` : ''}`
     },
   ];
 
