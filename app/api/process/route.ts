@@ -54,6 +54,7 @@ export async function POST(req: Request) {
       isRetry, 
       bannedTerms,
       guidelines,
+      referenceMaterial,
       sourceLanguage,
       targetLanguage,
       conversationHistory
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
       knobs,
       glossary,
       guidelines,
+      referenceMaterial,
       sourceLanguage,
       targetLanguage,
       conversationHistory

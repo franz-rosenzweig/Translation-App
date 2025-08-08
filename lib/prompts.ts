@@ -37,6 +37,7 @@ export function composePrompt({
   knobs = {},
   glossary = [],
   guidelines = "",
+  referenceMaterial = "",
   sourceLanguage = "hebrew",
   targetLanguage = "english", 
   conversationHistory = []
@@ -48,6 +49,7 @@ export function composePrompt({
   knobs?: Record<string, unknown>;
   glossary?: Array<{ hebrew: string; chosen_english: string; note?: string }>;
   guidelines?: string;
+  referenceMaterial?: string;
   sourceLanguage?: string;
   targetLanguage?: string;
   conversationHistory?: Array<any>;
@@ -68,10 +70,20 @@ export function composePrompt({
       content: [
         baseSystemPrompt,
         guidelines ? `\n\nTranslation Guidelines:\n${guidelines}` : "",
+        referenceMaterial ? `\n\nSTYLE REFERENCE MATERIAL (IMPORTANT - Use these examples to match writing style and tone):\n${referenceMaterial.substring(0, 3000)}${referenceMaterial.length > 3000 ? '\n\n[Reference material truncated for length. Focus on the patterns and style shown above.]' : ''}\n\nPay close attention to the writing style, sentence structure, vocabulary choices, and tone in the reference material above. Match this style in your edited translation.` : "",
         promptOverride,
         style !== "default" ? `Style: ${style}` : "",
         glossary.length ? `Glossary terms: ${JSON.stringify(glossary)}` : "",
-        Object.keys(knobs).length ? `Settings: ${JSON.stringify(knobs)}` : "",
+        Object.keys(knobs).length ? `\n\nTRANSLATION INTENSITY SETTINGS (1=minimal, 10=maximum):\n${Object.entries(knobs).map(([key, value]) => {
+          const numValue = Number(value);
+          switch(key) {
+            case 'americanization': return `• Americanization Level ${numValue}/10: ${numValue <= 3 ? 'Preserve original phrasing' : numValue <= 7 ? 'Moderate American adaptation' : 'Strong American idioms and phrasing'}`;
+            case 'structureStrictness': return `• Structure Adherence ${numValue}/10: ${numValue <= 3 ? 'Allow flexible restructuring' : numValue <= 7 ? 'Maintain general structure' : 'Preserve exact sentence order'}`;
+            case 'toneStrictness': return `• Tone Matching ${numValue}/10: ${numValue <= 3 ? 'Natural English tone' : numValue <= 7 ? 'Balance original and target tone' : 'Preserve exact original tone'}`;
+            case 'jargonTolerance': return `• Technical Terms ${numValue}/10: ${numValue <= 3 ? 'Simplify technical language' : numValue <= 7 ? 'Keep moderate jargon' : 'Preserve all technical terminology'}`;
+            default: return `${key}: ${value}`;
+          }
+        }).join('\n')}` : "",
         `Translation direction: ${sourceLanguage} → ${targetLanguage}`,
         historyContext
       ]

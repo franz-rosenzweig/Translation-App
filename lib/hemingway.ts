@@ -87,18 +87,16 @@ export interface ReadabilityResult {
   }>;
 }
 
-// Count syllables in a word (simplified algorithm)
+// Count syllables in a word (improved algorithm from hemingway clone)
 function countSyllables(word: string): number {
   word = word.toLowerCase();
-  if (word.length <= 3) return 1;
+  // Remove non-alphabetic characters
+  word = word.replace(/[^a-z]/g, '');
+  if (!word) return 0;
   
-  // Remove common endings
-  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
-  word = word.replace(/^y/, '');
-  
-  // Count vowel groups
-  const syllables = word.match(/[aeiouy]{1,2}/g);
-  return syllables ? syllables.length : 1;
+  // Count contiguous vowel groups as syllables
+  const groups = word.match(/[aeiouy]+/g);
+  return groups ? groups.length : 1;
 }
 
 // Enhanced analysis functions
@@ -211,13 +209,31 @@ export function findEnhancedComplexWords(text: string): EnhancedHighlight[] {
 export function findEnhancedPassiveVoice(text: string): EnhancedHighlight[] {
   const highlights: EnhancedHighlight[] = [];
   
-  // Enhanced passive voice detection
-  const passivePatterns = [
-    /\b(is|are|was|were|be|been|being)\s+\w*(ed|en)\b/gi,
-    /\b(is|are|was|were|be|been|being)\s+(made|given|taken|seen|done|shown|known|written|driven|chosen|spoken|broken|stolen|frozen|eaten|beaten|forgotten|gotten|hidden|ridden|forbidden|bitten|torn|worn|born|sworn|drawn)\b/gi
+  // Enhanced passive voice detection with comprehensive irregular participles
+  const auxiliaries = ['is', 'are', 'was', 'were', 'be', 'been', 'being', 'am'];
+  const irregularParticiples = [
+    'known', 'done', 'seen', 'gone', 'made', 'taken',
+    'given', 'shown', 'built', 'written', 'read', 'said',
+    'heard', 'found', 'felt', 'left', 'kept', 'lost',
+    'sold', 'told', 'held', 'sent', 'spent', 'lent',
+    'meant', 'dealt', 'slept', 'swept', 'wept', 'crept',
+    'leapt', 'learnt', 'burnt', 'spelt', 'spoilt',
+    'driven', 'chosen', 'spoken', 'broken', 'stolen',
+    'frozen', 'eaten', 'beaten', 'forgotten', 'gotten',
+    'hidden', 'ridden', 'forbidden', 'bitten', 'torn',
+    'worn', 'born', 'sworn', 'drawn', 'grown', 'thrown',
+    'blown', 'flown', 'shown', 'known'
   ];
 
-  for (const pattern of passivePatterns) {
+  // Create patterns for regular and irregular passives
+  const patterns = [
+    // Regular past participles (ending in -ed)
+    new RegExp(`\\b(${auxiliaries.join('|')})\\s+\\w*ed\\b`, 'gi'),
+    // Irregular participles
+    new RegExp(`\\b(${auxiliaries.join('|')})\\s+(${irregularParticiples.join('|')})\\b`, 'gi')
+  ];
+
+  for (const pattern of patterns) {
     let match;
     while ((match = pattern.exec(text)) !== null) {
       highlights.push({
@@ -250,10 +266,15 @@ export function analyzeEnhancedReadability(text: string): EnhancedReadabilityRes
   const words = text.match(wordRegex) || [];
   const syllableCount = words.reduce((sum: number, word: string) => sum + countSyllables(word), 0);
   
-  // Calculate Flesch-Kincaid Grade Level
+  // Calculate Flesch-Kincaid Grade Level (improved from hemingway clone)
   const wordsPerSentence = words.length / Math.max(sentences.length, 1);
   const syllablesPerWord = syllableCount / Math.max(words.length, 1);
-  const gradeLevel = 0.39 * wordsPerSentence + 11.8 * syllablesPerWord - 15.59;
+  let gradeLevel = 0.39 * wordsPerSentence + 11.8 * syllablesPerWord - 15.59;
+  
+  // Clamp grade to a reasonable range (like the Python version)
+  if (gradeLevel < 0) {
+    gradeLevel = 0.0;
+  }
   
   // Get enhanced highlights
   const sentenceHighlights = findEnhancedSentenceDifficulty(text);

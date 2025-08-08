@@ -105,7 +105,7 @@ export default function HighlightedText({
 
   return (
     <div className="relative">
-      <div className="whitespace-pre-wrap leading-relaxed">
+      <div className="whitespace-pre-wrap leading-relaxed font-serif text-base">
         {segments.map((segment, index) => {
           if (segment.highlights.length === 0) {
             return <span key={index}>{segment.text}</span>;

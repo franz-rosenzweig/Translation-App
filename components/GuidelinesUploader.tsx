@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, FileText, X } from 'lucide-react';
 import * as Dialog from "@radix-ui/react-dialog";
+import { saveMaterials, getMaterials } from '@/lib/storage';
 
 interface GuidelinesUploaderProps {
   onGuidelinesChange: (guidelines: string) => void;
@@ -12,6 +13,17 @@ interface GuidelinesUploaderProps {
 export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelines, open = false, onOpenChange }: GuidelinesUploaderProps) {
   const [guidelines, setGuidelines] = useState(currentGuidelines || '');
 
+  // Load stored guidelines on mount
+  useEffect(() => {
+    const storedMaterials = getMaterials();
+    if (storedMaterials.guidelines && !currentGuidelines) {
+      setGuidelines(storedMaterials.guidelines);
+      onGuidelinesChange(storedMaterials.guidelines);
+      // Visual feedback that guidelines were restored
+      console.log('📋 Restored translation guidelines from storage');
+    }
+  }, [currentGuidelines, onGuidelinesChange]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && (file.type === 'text/markdown' || file.name.endsWith('.md') || file.type === 'text/plain')) {
@@ -20,6 +32,8 @@ export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelin
         const content = e.target?.result as string;
         setGuidelines(content);
         onGuidelinesChange(content);
+        // Save to persistent storage
+        saveMaterials({ guidelines: content });
       };
       reader.readAsText(file);
     }
@@ -29,6 +43,8 @@ export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelin
     const newGuidelines = e.target.value;
     setGuidelines(newGuidelines);
     onGuidelinesChange(newGuidelines);
+    // Save to persistent storage
+    saveMaterials({ guidelines: newGuidelines });
   };
 
   const loadDefaultGuidelines = () => {

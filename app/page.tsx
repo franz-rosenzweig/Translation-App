@@ -11,9 +11,11 @@ import Toasts, { useToasts } from "@/components/Toasts";
 import HighlightedText from "@/components/HighlightedText";
 import SessionManager, { type TranslationSession } from "@/components/SessionManager";
 import GuidelinesUploader from "@/components/GuidelinesUploader";
+import ReferenceMaterialUploader from "@/components/ReferenceMaterialUploader";
 import LanguageSelector, { type Language } from "@/components/LanguageSelector";
 import { checkGuardrails, validateEditedText, buildReEnforcementPrompt } from "@/lib/guardrails";
 import type { HighlightType } from "@/lib/hemingway";
+import type { Theme } from "@/components/ThemeSelector";
 
 export default function Page() {
   const { toasts, addToast } = useToasts();
@@ -28,13 +30,16 @@ export default function Page() {
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false);
   const [showSessionManager, setShowSessionManager] = useState(false);
   const [showGuidelinesUploader, setShowGuidelinesUploader] = useState(false);
+  const [showReferenceMaterial, setShowReferenceMaterial] = useState(false);
+  const [referenceMaterial, setReferenceMaterial] = useState("");
+  const [theme, setTheme] = useState<Theme>('dark');
   const [promptSettings, setPromptSettings] = useState({
     override: "",
     knobs: {
-      americanization: 1,
-      structureStrictness: 1,
-      toneStrictness: 1,
-      jargonTolerance: 1
+      americanization: 5,
+      structureStrictness: 5,
+      toneStrictness: 5,
+      jargonTolerance: 5
     },
     toggles: {
       preserveParagraphs: true,
@@ -96,26 +101,42 @@ export default function Page() {
     addToast({ description: "Started new session", type: "info" });
   };
 
-  // Auto-save current work to localStorage
+    // Auto-save work and uploaded materials to localStorage
   useEffect(() => {
-    if (hebrew || roughEnglish || editedText) {
-      const autoSave = {
-        hebrew,
-        roughEnglish,
-        editedText,
-        model,
-        guidelines,
-        sourceLanguage,
-        targetLanguage,
-        useRoughEnglish,
-        conversationHistory,
-        timestamp: Date.now()
-      };
-      localStorage.setItem('translation-autosave', JSON.stringify(autoSave));
-    }
-  }, [hebrew, roughEnglish, editedText, model, guidelines, sourceLanguage, targetLanguage, useRoughEnglish, conversationHistory]);
+    const autoSave = {
+      timestamp: Date.now(),
+      hebrew,
+      roughEnglish,
+      editedText,
+      model,
+      guidelines,
+      referenceMaterial,
+      promptSettings,
+      sourceLanguage,
+      targetLanguage,
+      useRoughEnglish,
+      conversationHistory,
+      theme
+    };
+    localStorage.setItem('translation-autosave', JSON.stringify(autoSave));
+  }, [hebrew, roughEnglish, editedText, model, guidelines, referenceMaterial, promptSettings, sourceLanguage, targetLanguage, useRoughEnglish, conversationHistory, theme]);
 
-  // Load auto-saved work on mount
+  // Theme management with proper DOM updates
+  useEffect(() => {
+    // Load theme preference from localStorage
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    if (savedTheme && ['dark', 'github-light', 'github-dark', 'solarized-light', 'solarized-dark', 'monokai', 'one-light'].includes(savedTheme)) {
+      setTheme(savedTheme as Theme);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Apply theme to document and save preference
+    document.documentElement.className = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Load auto-saved work and materials on mount
   useEffect(() => {
     const autoSave = localStorage.getItem('translation-autosave');
     if (autoSave) {
@@ -129,12 +150,19 @@ export default function Page() {
           setEditedText(parsed.editedText || "");
           setModel(parsed.model || "gpt-4");
           setGuidelines(parsed.guidelines || "");
+          setReferenceMaterial(parsed.referenceMaterial || "");
+          if (parsed.promptSettings) {
+            setPromptSettings(parsed.promptSettings);
+          }
+          if (parsed.theme && ['dark', 'github-light', 'github-dark', 'solarized-light', 'solarized-dark', 'monokai', 'one-light'].includes(parsed.theme)) {
+            setTheme(parsed.theme);
+          }
           setSourceLanguage(parsed.sourceLanguage || "hebrew");
           setTargetLanguage(parsed.targetLanguage || "english");
           setUseRoughEnglish(parsed.useRoughEnglish || false);
           setConversationHistory(parsed.conversationHistory || []);
-          if (parsed.hebrew || parsed.roughEnglish || parsed.editedText) {
-            addToast({ description: "Restored previous work", type: "info" });
+          if (parsed.hebrew || parsed.roughEnglish || parsed.editedText || parsed.guidelines || parsed.referenceMaterial) {
+            addToast({ description: "Restored previous work and materials", type: "info" });
           }
         }
       } catch (error) {
@@ -189,6 +217,7 @@ export default function Page() {
           isRetry,
           bannedTerms,
           guidelines,
+          referenceMaterial,
           sourceLanguage,
           targetLanguage,
           conversationHistory: conversationHistory.slice(-5) // Send last 5 conversations for context
@@ -292,6 +321,9 @@ export default function Page() {
         onOpenPromptDrawer={() => setPromptDrawerOpen(true)}
         onOpenSessionManager={() => setShowSessionManager(true)}
         onOpenGuidelinesUploader={() => setShowGuidelinesUploader(true)}
+        onOpenReferenceMaterial={() => setShowReferenceMaterial(true)}
+        theme={theme}
+        onThemeChange={setTheme}
         onClear={() => {
           onClear();
           setPromptSettings({
@@ -460,7 +492,7 @@ export default function Page() {
                           showTooltips={true}
                         />
                       ) : (
-                        <pre className="whitespace-pre-wrap">{editedText}</pre>
+                        <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">{editedText}</div>
                       )}
                     </div>
                   </div>
@@ -593,6 +625,13 @@ export default function Page() {
         currentGuidelines={guidelines}
         open={showGuidelinesUploader}
         onOpenChange={setShowGuidelinesUploader}
+      />
+      
+      <ReferenceMaterialUploader 
+        onReferenceMaterialChange={setReferenceMaterial}
+        currentReferenceMaterial={referenceMaterial}
+        open={showReferenceMaterial}
+        onOpenChange={setShowReferenceMaterial}
       />
     </div>
   );

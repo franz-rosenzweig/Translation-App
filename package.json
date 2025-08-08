@@ -1,6 +1,7 @@
 {
-  "name": "type3-trans-edit",
+  "name": "translnathan",
   "version": "1.0.0",
+  "description": "Professional Hebrew-English AI Translation Editor with Style Awareness",
   "private": true,
   "type": "module",
   "scripts": {
