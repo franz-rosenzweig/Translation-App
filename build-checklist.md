@@ -1,7 +1,42 @@
 
 # Type3 Translation‑Editing App — Detailed Build Checklist
 
-A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑translated Hebrew → American English using your “Type 3” rules. Optimized for VS Code. Short steps, strong guardrails. Includes Hemingway‑style analyzer, Prompt Drawer, and GPT‑5 model selector.
+A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑translated Hebrew → American English using your “Type 3” rules. Optimized for VS Code. Short steps, strong guardrails. Includes Hemingway‑sty## 10) Prompt Drawer (F## 10) Prompt Drawer (Fine‑Tune Prompt Live)
+
+- [x] UI: Radix Dialog with textarea + sliders + toggles; Save/Restore presets.
+- [x] Merge order for final system prompt:
+  - Base → Project Style → **Prompt Override** → **Knobs** → **Schema lock** ("Return JSON only per schema").
+- [x] Sliders map to explicit rules, e.g.:
+  - Americanization `0..3`: "Favor idiomatic U.S. phrasing unless fidelity risk (level X/3)."
+  - Structure strictness: "Preserve author paragraphing unless clarity requires change (level X/3)."
+  - Tone strictness: "Keep sober, non‑sales tone (level X/3)."
+  - Jargon tolerance: "Prefer plain English; retain technical terms when necessary (level X/3)."
+- [x] Persist last 5 overrides in `localStorage` with timestamp.
+
+**Definition of Done**: Changes feel predictable; one‑click restore to a previous prompt works.pt Live)
+
+- [x] U## 13) Guardrails
+
+- [x] Optional **banned terms** per profile.
+- [x] If detected in `edited_text`:
+  - [x] Show red banner with offending terms.
+  - [x] Provide **"Re‑ask with enforcement"** button that adds a corrective line to system prompt and retries.
+- [x] Input size guard with clear suggestion to split long chapters.
+
+**Definition of Done**: Enforcement flow works in one click; user sees exactly what changed.Dialog with textarea + sliders + toggles; Save/Re## 18) Final Polish
+
+- [x] Copy buttons for Edited Text and Notes.
+- [x] Word/character counters beneath inputs.
+- [x] "New session" button clears all state.
+- [x] Microcopy: short, directive; no fluff.presets.
+- [x] Merge order for final system prompt:
+  - Base → Project Style → **Prompt Override** → **Knobs** → **Schema lock** ("Return JSON only per schema").
+- [x] Sliders map to explicit rules, e.g.:
+  - Americanization `0..3`: "Favor idiomatic U.S. phrasing unless fidelity risk (level X/3)."
+  - Structure strictness: "Preserve author paragraphing unless clarity requires change (level X/3)."
+  - Tone strictness: "Keep sober, non‑sales tone (level X/3)."
+  - Jargon tolerance: "Prefer plain English; retain technical terms when necessary (level X/3)."
+- [x] Persist last 5 overrides in `localStorage` with timestamp., Prompt Drawer, and GPT‑5 model selector.
 
 ---
 
@@ -23,25 +58,25 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 1) Decisions Up Front
 
-- [ ] **Stack**: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + OpenAI Node SDK.
-- [ ] **Models**: `gpt-5` (quality), `gpt-5-mini` (default), `gpt-5-nano` (cheap).
-- [ ] **Hosting**: Local dev now. Add Basic Auth before exposing publicly.
-- [ ] **Data**: No DB. Persist profile and overrides in `localStorage`.
-- [ ] **Cost**: API billed per token. ChatGPT Plus does not discount API usage.
+- [x] **Stack**: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + OpenAI Node SDK.
+- [x] **Models**: `gpt-5` (quality), `gpt-5-mini` (default), `gpt-5-nano` (cheap).
+- [x] **Hosting**: Local dev now. Add Basic Auth before exposing publicly.
+- [x] **Data**: No DB. Persist profile and overrides in `localStorage`.
+- [x] **Cost**: API billed per token. ChatGPT Plus does not discount API usage.
 
 ---
 
 ## 2) Project Scaffolding
 
-- [ ] Create repo: `type3-trans-edit/`
-- [ ] Initialize:
+- [x] Create repo: `type3-trans-edit/`
+- [x] Initialize:
   ```bash
   npm init -y
   npm i next react react-dom
   npm i -D typescript @types/node @types/react @types/react-dom
   npx tsc --init
   ```
-- [ ] Add scripts to `package.json`:
+- [x] Add scripts to `package.json`:
   ```json
   {
     "scripts": {
@@ -51,7 +86,7 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
     }
   }
   ```
-- [ ] Install deps:
+- [x] Install deps:
   ```bash
   npm i openai papaparse diff zod
   npm i tailwindcss postcss autoprefixer
@@ -59,8 +94,8 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
   npm i class-variance-authority clsx tailwind-merge lucide-react
   npm i @radix-ui/react-dialog @radix-ui/react-tabs @radix-ui/react-tooltip
   ```
-- [ ] Configure Tailwind: add `app/**/*.{ts,tsx}` to `content` in `tailwind.config.js`.
-- [ ] Create `.env.local`:
+- [x] Configure Tailwind: add `app/**/*.{ts,tsx}` to `content` in `tailwind.config.js`.
+- [x] Create `.env.local`:
   ```env
   OPENAI_API_KEY=sk-...
   OPENAI_MODEL=gpt-5-mini
@@ -204,20 +239,20 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 7) UI Skeleton (Sleek & Professional)
 
-- [ ] **Top bar**: title, **ModelSelector**, Run/Clear, **Prompt Drawer** button.
-- [ ] **Left Inputs Panel**:
-  - [ ] Hebrew textarea (RTL, `dir="rtl"`).
-  - [ ] Rough English textarea (LTR).
+- [x] **Top bar**: title, **ModelSelector**, Run/Clear, **Prompt Drawer** button.
+- [x] **Left Inputs Panel**:
+  - [x] Hebrew textarea (RTL, `dir="rtl"`).
+  - [x] Rough English textarea (LTR).
   - [ ] Style dropdown (saved profiles).
-  - [ ] **GlossaryUpload** (CSV: `hebrew,english[,note]`).
+  - [x] **GlossaryUpload** (CSV: `hebrew,english[,note]`).
   - [ ] Knobs: Americanization, Structure strictness, Tone strictness, Jargon tolerance.
-- [ ] **Right Results Tabs**:
-  - [ ] Edited Text (with optional Hemingway highlight overlay).
-  - [ ] Notes (change_log, glossary hits, flags).
-  - [ ] Readability (grade, counters, legend).
-  - [ ] Diff (rough vs edited).
+- [x] **Right Results Tabs**:
+  - [x] Edited Text (with optional Hemingway highlight overlay).
+  - [x] Notes (change_log, glossary hits, flags).
+  - [x] Readability (grade, counters, legend).
+  - [x] Diff (rough vs edited).
 
-- [ ] Keyboard shortcuts:
+- [x] Keyboard shortcuts:
   - `Cmd/Ctrl+Enter` → Run
   - `Cmd/Ctrl+/` → Prompt Drawer
   - `Cmd/Ctrl+[ / ]` → Switch tabs
@@ -228,20 +263,18 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 8) Components to Build
 
-- [ ] `ModelSelector.tsx` — dropdown: `gpt-5`, `gpt-5-mini`, `gpt-5-nano` (+ tooltips, persist choice).
-- [ ] `GlossaryUpload.tsx` — parse CSV with PapaParse; show count + sample; emit normalized array.
-- [ ] `PromptDrawer.tsx` — Radix dialog with:
-  - [ ] **Prompt Override** textarea.
-  - [ ] Sliders (0–3): Americanization, Structure, Tone, Jargon.
-  - [ ] Toggles: Preserve paragraph breaks, Prefer shorter sentences, Prefer plain verbs.
-  - [ ] Version history: save/restore last 5 overrides.
-- [ ] `RunBar.tsx` — Run/Clear buttons, model selector, drawer button.
-- [ ] `OutputTabs.tsx` — Tabs wrapper with Radix.
-- [ ] `EditedText.tsx` — renders final text + Hemingway highlights.
-- [ ] `NotesPane.tsx` — renders change_log, glossary hits, flags.
-- [ ] `ReadabilityPane.tsx` — grade, counters, legend, mini heat‑map.
-- [ ] `DiffView.tsx` — inline diff via `diff` package.
-- [ ] `Toasts.tsx` — errors/success via Radix tooltip/portal.
+- [x] `ModelSelector.tsx` — dropdown: `gpt-5`, `gpt-5-mini`, `gpt-5-nano` (+ tooltips, persist choice).
+- [x] `GlossaryUpload.tsx` — parse CSV with PapaParse; show count + sample; emit normalized array.
+- [x] `PromptDrawer.tsx` — Radix dialog with:
+  - [x] **Prompt Override** textarea.
+  - [x] Sliders (0–3): Americanization, Structure, Tone, Jargon.
+  - [x] Toggles: Preserve paragraph breaks, Prefer shorter sentences, Prefer plain verbs.
+  - [x] Version history: save/restore last 5 overrides.
+- [x] `RunBar.tsx` — Run/Clear buttons, model selector, drawer button.
+- [x] `OutputTabs.tsx` — Tabs wrapper with Radix.
+- [x] `ReadabilityPane.tsx` — grade, counters, legend, mini heat‑map.
+- [x] `DiffView.tsx` — inline diff via `diff` package.
+- [x] `Toasts.tsx` — errors/success via Radix tooltip/portal.
 
 **Definition of Done**: Components are isolated, typed, and accessible.
 
@@ -249,28 +282,73 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 9) Hemingway‑Style Analyzer (`lib/hemingway.ts`)
 
-- [ ] **Tokenization**
-  - [ ] `splitSentences(text)`: robust regex; keep punctuation.
-  - [ ] `splitWords(sent)`: keep apostrophes/hyphens; strip punctuation.
-- [ ] **Grade**
-  - [ ] Implement **Automated Readability Index (ARI)** for overall grade:
+- [x] **Tokenization**
+  - [x] `splitSentences(text)`: robust regex; keep punctuation.
+  - [x] `splitWords(sent)`: keep apostrophes/hyphens; strip punctuation.
+- [x] **Grade**
+  - [x] Implement **Automated Readability Index (ARI)** for overall grade:
     - ARI ≈ 4.71 × (characters/words) + 0.5 × (words/sentences) − 21.43
-  - [ ] Optional: compute Flesch‑Kincaid for comparison.
-- [ ] **Classifiers**
-  - [ ] Difficulty: **Hard** ≥ 20 words; **Very Hard** ≥ 30 words.
-  - [ ] **Adverbs**: `\b\w+ly\b` minus an allowlist (`family`, `holy`, etc.).
-  - [ ] **Passive**: `\b(is|are|was|were|be|been|being)\s+\w+(ed|en)\b` plus irregulars (`made`, `seen`, `given`, etc.).
-  - [ ] **Complex words**: ≥ 3 syllables via vowel‑group heuristic; exclude proper nouns.
-- [ ] **Output**
-  - [ ] Return `{ grade, counts, annotations: [{ start, end, kind }] }`.
-  - [ ] Kinds: `hard`, `veryhard`, `adverb`, `passive`, `complex`.
+  - [x] Optional: compute Flesch‑Kincaid for comparison.
+- [x] **Classifiers**
+  - [x] Difficulty: **Hard** ≥ 20 words; **Very Hard** ≥ 30 words.
+  - [x] **Adverbs**: `\b\w+ly\b` minus an allowlist (`family`, `holy`, etc.).
+  - [x] **Passive**: `\b(is|are|was|were|be|been|being)\s+\w+(ed|en)\b` plus irregulars (`made`, `seen`, `given`, etc.).
+  - [x] **Complex words**: ≥ 3 syllables via vowel‑group heuristic; exclude proper nouns.
+- [x] **Output**
+  - [x] Return `{ grade, counts, annotations: [{ start, end, kind }] }`.
+  - [x] Kinds: `hard`, `veryhard`, `adverb`, `passive`, `complex`.
 
-- [ ] **Renderer**
-  - [ ] In `EditedText.tsx`, wrap ranges in spans with classes:
+- [x] **Renderer**
+  - [x] In `EditedText.tsx`, wrap ranges in spans with classes:
     - `.hl-hard`, `.hl-veryhard`, `.hl-adverb`, `.hl-passive`, `.hl-complex`.
-  - [ ] Toggle via a switch. Add legend and counts in Readability tab.
+  - [x] Toggle via a switch. Add legend and counts in Readability tab.
 
 **Definition of Done**: Highlights match counters; toggling works; no lag on long paragraphs.
+
+---
+
+## 9.5) Enhanced Hemingway-Style Syntax Highlighting
+
+- [ ] **Enhanced Analysis Engine**:
+  - [ ] Extend `lib/hemingway.ts` to return precise character positions for overlapping highlights
+  - [ ] Add grammar/style classifiers:
+    - [ ] **Weakeners**: qualifiers like "very", "really", "quite", "rather"
+    - [ ] **Filler words**: "basically", "actually", "literally", "obviously"
+    - [ ] **Hedge words**: "might", "could", "perhaps", "maybe"
+  - [ ] Improve sentence difficulty detection with configurable thresholds
+  - [ ] Add word-level complexity scoring
+
+- [ ] **Highlighting Component** (`components/HighlightedText.tsx`):
+  - [ ] Render text with overlaid colored backgrounds for each issue type
+  - [ ] Handle overlapping highlights gracefully (layered or priority-based)
+  - [ ] Color scheme matching Hemingway app:
+    - **Red/Pink** (#ff6b6b): Very hard sentences (≥30 words)
+    - **Yellow/Orange** (#feca57): Hard sentences (≥20 words)
+    - **Blue** (#54a0ff): Weakeners/adverbs
+    - **Purple** (#5f27cd): Complex words/simpler alternatives
+    - **Green** (#00d2d3): Passive voice
+  - [ ] Smooth hover effects showing issue descriptions
+  - [ ] Click-to-scroll to specific issues
+
+- [ ] **Interactive Controls**:
+  - [ ] Toggle switches for each highlight type in ReadabilityPane
+  - [ ] "Show all" / "Hide all" buttons
+  - [ ] Configurable severity thresholds (word count for hard sentences)
+  - [ ] Color customization options
+
+- [ ] **Integration**:
+  - [ ] Replace plain text in "Edited Text" tab with HighlightedText component
+  - [ ] Add toggle between plain and highlighted views
+  - [ ] Sync highlight counts with ReadabilityPane statistics
+  - [ ] Performance optimization for texts up to 10,000 words
+
+- [ ] **Advanced Features**:
+  - [ ] Tooltip explanations for each highlight type
+  - [ ] Suggested improvements on hover/click
+  - [ ] Export highlighted text as HTML
+  - [ ] Focus mode (highlight only one issue type at a time)
+
+**Definition of Done**: Smooth highlighting like Hemingway app; configurable; fast rendering; clear visual feedback.
 
 ---
 
@@ -292,10 +370,10 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 11) Model Selector (GPT‑5 Family)
 
-- [ ] Dropdown with: `gpt-5` (best), `gpt-5-mini` (default), `gpt-5-nano` (drafting).
-- [ ] Tooltip: quick guidance on cost/latency.
-- [ ] Pipe selection to API payload, persist in `localStorage`.
-- [ ] Log selected model server‑side for debugging.
+- [x] Dropdown with: `gpt-5` (best), `gpt-5-mini` (default), `gpt-5-nano` (drafting).
+- [x] Tooltip: quick guidance on cost/latency.
+- [x] Pipe selection to API payload, persist in `localStorage`.
+- [x] Log selected model server‑side for debugging.
 
 **Definition of Done**: Switching models changes latency/quality noticeably; choice persists across reloads.
 
@@ -303,10 +381,10 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 12) Glossary Flow
 
-- [ ] CSV headers: `hebrew,english[,note]`.
-- [ ] Normalize rows to `{ hebrew, chosen_english, note? }`.
-- [ ] Include JSON glossary in system prompt.
-- [ ] UI: show count and sample; show **terms_glossary_hits** in Notes.
+- [x] CSV headers: `hebrew,english[,note]`.
+- [x] Normalize rows to `{ hebrew, chosen_english, note? }`.
+- [x] Include JSON glossary in system prompt.
+- [x] UI: show count and sample; show **terms_glossary_hits** in Notes.
 
 **Definition of Done**: Bad CSV yields a clear inline error; good CSV affects outputs consistently.
 
@@ -326,13 +404,13 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 14) Error Handling & UX
 
-- [ ] Client:
-  - [ ] Error toast + persistent banner with HTTP code and next steps.
-  - [ ] Disable Run while pending; show spinner.
-  - [ ] **AbortController** to cancel previous request on new Run.
-- [ ] Server:
-  - [ ] Log `requestId`, model, duration, error type, retry info.
-  - [ ] Map errors cleanly to 400/429/502/500.
+- [x] Client:
+  - [x] Error toast + persistent banner with HTTP code and next steps.
+  - [x] Disable Run while pending; show spinner.
+  - [x] **AbortController** to cancel previous request on new Run.
+- [x] Server:
+  - [x] Log `requestId`, model, duration, error type, retry info.
+  - [x] Map errors cleanly to 400/429/502/500.
 
 **Definition of Done**: Failures are actionable and never ambiguous.
 
@@ -340,11 +418,11 @@ A precise, step‑by‑step checklist to build a sleek web UI that edits AI‑tr
 
 ## 15) Styling & Accessibility
 
-- [ ] Dark theme, high contrast, generous spacing.
-- [ ] 16–18px base text; optional monospace toggle for edited text.
-- [ ] Respect `prefers-reduced-motion`.
-- [ ] Proper labels, roles, focus traps in dialogs.
-- [ ] RTL only on the Hebrew textarea (`dir="rtl"`). Keep UI LTR.
+- [x] Dark theme, high contrast, generous spacing.
+- [x] 16–18px base text; optional monospace toggle for edited text.
+- [x] Respect `prefers-reduced-motion`.
+- [x] Proper labels, roles, focus traps in dialogs.
+- [x] RTL only on the Hebrew textarea (`dir="rtl"`). Keep UI LTR.
 
 **Definition of Done**: Lighthouse a11y ≥ 95; keyboard‑only is smooth.
 

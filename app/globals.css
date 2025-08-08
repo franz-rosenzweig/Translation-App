@@ -3,6 +3,30 @@
 @tailwind utilities;
 
 :root {
+  --accent: rgb(59, 130, 246);
+  --background: rgb(17, 17, 17);
+  --panel: rgb(23, 23, 23);
+  --muted: rgb(163, 163, 163);
+}
+
+body {
+  background-color: var(--background);
+  color: rgb(229, 229, 229);
+}
+
+.bg-panel {
+  background-color: var(--panel);
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+:root {
   color-scheme: dark;
 }
 
