@@ -124,6 +124,11 @@ async function handleTranslationProcessing(event, payload) {
 
     systemPrompt += "Provide your response as JSON with 'edited_text' field containing the translation, and optional 'change_log', 'terms_glossary_hits', and 'flags' arrays.";
 
+    // Add audience version instructions if requested
+    if (payload.mode && payload.mode.startsWith('audience')) {
+      systemPrompt += " When audience mode is requested, also include an 'audience_version' object with 'text' and optional 'rationale' fields for a version optimized for the intended audience based on guidelines and reference material.";
+    }
+
     // Add guidelines if provided
     if (payload.guidelines) {
       systemPrompt += `\n\nTranslation Guidelines:\n${payload.guidelines}`;
@@ -152,9 +157,9 @@ async function handleTranslationProcessing(event, payload) {
 - Jargon tolerance: ${payload.knobs.jargonTolerance || 5}`;
     }
 
-    // Add custom prompt override
-    if (payload.override) {
-      userPrompt += `\n\nAdditional instructions: ${payload.override}`;
+    // Add custom prompt override with higher priority
+    if (payload.promptOverride) {
+      userPrompt += `\n\n=== HIGHEST-PRIORITY OVERRIDE DIRECTIVES ===\n${payload.promptOverride}\nIMPORTANT: If any earlier instruction conflicts with these override directives, follow THE OVERRIDE.\n=== END OVERRIDE ===`;
     }
 
     // Call OpenAI
@@ -177,7 +182,8 @@ async function handleTranslationProcessing(event, payload) {
       edited_text: result.translatedText || result.edited_text || result.translation || content,
       change_log: result.change_log || [],
       terms_glossary_hits: result.terms_glossary_hits || [],
-      flags: result.flags || []
+      flags: result.flags || [],
+      audience_version: result.audience_version || undefined
     };
 
   } catch (error) {

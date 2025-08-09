@@ -57,7 +57,8 @@ export async function POST(req: Request) {
       referenceMaterial,
       sourceLanguage,
       targetLanguage,
-      conversationHistory
+      conversationHistory,
+      mode = "standard"
     } = body;
 
     // Determine source text based on language selection
@@ -97,11 +98,22 @@ export async function POST(req: Request) {
       referenceMaterial,
       sourceLanguage,
       targetLanguage,
-      conversationHistory
+      conversationHistory,
+      mode
     });
 
     const response = await callOpenAI(messages, ac.signal);
     const validated = parseEditPayload(response);
+
+    // Log when audience mode is used (dev only)
+    if (process.env.NODE_ENV === 'development' && mode !== 'standard') {
+      console.log(`[DEV] Audience mode: ${mode}, response has audience_version:`, !!validated.audience_version);
+    }
+
+    // Validate audience version if requested
+    if (mode.startsWith('audience') && !validated.audience_version) {
+      console.warn('Audience mode requested but no audience_version in response');
+    }
 
     return NextResponse.json(validated);
   } catch (err: any) {

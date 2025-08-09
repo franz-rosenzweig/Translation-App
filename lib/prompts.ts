@@ -26,8 +26,19 @@ IMPORTANT: Return JSON only, matching this exact schema:
       "kind": "string", // fidelity|tone|ambiguity|idiom|formatting|terminology
       "note": "string"
     }
-  ]
+  ],
+  "audience_version": { // Optional: Only when audience mode requested
+    "text": "string", // Audience-optimized adaptation
+    "rationale": "string" // Brief reasoning of stylistic approach
+  }
 }`;
+
+// Strong priority wrapper for promptOverride
+function wrapOverride(override: string) {
+  return override
+    ? `\n\n=== HIGHEST-PRIORITY OVERRIDE DIRECTIVES ===\n${override}\nIMPORTANT: If any earlier instruction conflicts with these override directives, follow THE OVERRIDE. Do NOT weaken or reinterpret them. Only ignore if they would break JSON format or produce unsafe output.\n=== END OVERRIDE ===`
+    : "";
+}
 
 export function composePrompt({
   hebrew,
@@ -40,7 +51,8 @@ export function composePrompt({
   referenceMaterial = "",
   sourceLanguage = "hebrew",
   targetLanguage = "english", 
-  conversationHistory = []
+  conversationHistory = [],
+  mode = "standard" // "standard" | "audience-both" | "audience-only"
 }: {
   hebrew: string;
   roughEnglish: string;
@@ -53,6 +65,7 @@ export function composePrompt({
   sourceLanguage?: string;
   targetLanguage?: string;
   conversationHistory?: Array<any>;
+  mode?: "standard" | "audience-both" | "audience-only";
 }) {
   const sourceText = sourceLanguage === 'hebrew' ? hebrew : roughEnglish;
   const targetText = sourceLanguage === 'hebrew' ? roughEnglish : hebrew;
@@ -64,6 +77,16 @@ export function composePrompt({
       ).join('\n')}`
     : '';
 
+  // Audience adaptation instructions
+  const audienceAddendum = mode.startsWith("audience")
+    ? `\n\nAUDIENCE ADAPTATION REQUEST: In addition to (or instead of in audience-only mode) the faithful edited_text, produce an "audience_version" that is deliberately optimized for the INTENDED AUDIENCE derived from: guidelines, reference material style signals, and override directives. This version may:
+- Restructure for narrative flow
+- Adjust tone, emotional resonance, pacing, and idiom
+- Strengthen cohesion and voice
+BUT it must not introduce factual content absent from the source. Provide concise rationale in audience_version.rationale.
+If mode is audience-only, you may omit change_log and other arrays except flags if needed, but must still return edited_text (can mirror audience_version.text if only one is relevant for JSON schema stability).`
+    : '';
+
   const messages = [
     {
       role: "system" as const,
@@ -71,7 +94,6 @@ export function composePrompt({
         baseSystemPrompt,
         guidelines ? `\n\nTranslation Guidelines:\n${guidelines}` : "",
         referenceMaterial ? `\n\nSTYLE REFERENCE MATERIAL (IMPORTANT - Use these examples to match writing style and tone):\n${referenceMaterial.substring(0, 3000)}${referenceMaterial.length > 3000 ? '\n\n[Reference material truncated for length. Focus on the patterns and style shown above.]' : ''}\n\nPay close attention to the writing style, sentence structure, vocabulary choices, and tone in the reference material above. Match this style in your edited translation.` : "",
-        promptOverride,
         style !== "default" ? `Style: ${style}` : "",
         glossary.length ? `Glossary terms: ${JSON.stringify(glossary)}` : "",
         Object.keys(knobs).length ? `\n\nTRANSLATION INTENSITY SETTINGS (1=minimal, 10=maximum):\n${Object.entries(knobs).map(([key, value]) => {
@@ -85,7 +107,9 @@ export function composePrompt({
           }
         }).join('\n')}` : "",
         `Translation direction: ${sourceLanguage} → ${targetLanguage}`,
-        historyContext
+        audienceAddendum,
+        historyContext,
+        wrapOverride(promptOverride) // LAST for maximum priority
       ]
         .filter(Boolean)
         .join("\n\n"),
@@ -99,4 +123,9 @@ export function composePrompt({
   ];
 
   return messages;
+}
+
+// Convenience helper for audience-only mode
+export function composeAudienceOnlyPrompt(params: Omit<Parameters<typeof composePrompt>[0], 'mode'>) {
+  return composePrompt({ ...params, mode: "audience-only" });
 }
