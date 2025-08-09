@@ -195,7 +195,7 @@ export default function Page() {
     }
   }, []);
 
-  const onRun = useCallback(async (isRetry = false, mode = "standard") => {
+  const onRun = useCallback(async (isRetry = false) => {
     // Check if API key is configured (only in Electron)
     if (window.electronAPI && !hasApiKey) {
       addToast({
@@ -252,20 +252,13 @@ export default function Page() {
         referenceMaterial,
         sourceLanguage,
         targetLanguage,
-        conversationHistory: conversationHistory.slice(-5), // Send last 5 conversations for context
-        mode
+        conversationHistory: conversationHistory.slice(-5) // Send last 5 conversations for context
       }, ac.signal);
 
       const newEditedText = json.edited_text || "";
       setEditedText(newEditedText);
       
-      // Handle audience version if present
-      if (json.audience_version) {
-        setAudienceDraft({
-          text: json.audience_version.text,
-          rationale: json.audience_version.rationale
-        });
-      }
+      // Don't override audience draft when doing faithful translation
       
       // Add to conversation history
       const historyEntry = {
@@ -274,7 +267,6 @@ export default function Page() {
         sourceText,
         roughText,
         result: newEditedText,
-        audienceVersion: json.audience_version?.text,
         sourceLanguage,
         targetLanguage
       };
@@ -289,20 +281,6 @@ export default function Page() {
             .map(v => v.term!)
             .filter(Boolean);
           setBannedTermsViolations(violatedTerms);
-        }
-        
-        // Also check audience version for banned terms
-        if (json.audience_version?.text) {
-          const audienceCheck = validateEditedText(json.audience_version.text, { bannedTerms });
-          if (!audienceCheck.isValid) {
-            const audienceViolatedTerms = audienceCheck.violations
-              .filter(v => v.type === 'bannedTerm')
-              .map(v => v.term!)
-              .filter(Boolean);
-            setAudienceBannedTermsViolations(audienceViolatedTerms);
-          } else {
-            setAudienceBannedTermsViolations([]);
-          }
         }
       }
 
@@ -332,9 +310,82 @@ export default function Page() {
     }
   }, [hebrew, roughEnglish, model, promptSettings, glossary, addToast, hasApiKey]);
 
-  const onGenerateAudience = useCallback(async () => {
-    await onRun(false, "audience-both");
-  }, [onRun]);
+    const onGenerateAudience = useCallback(async () => {
+    if (!hebrew.trim() && !roughEnglish.trim()) return;
+    
+    // Get banned terms from localStorage (same as onRun)
+    const bannedTermsText = localStorage.getItem("bannedTerms") || "";
+    const bannedTerms = bannedTermsText.split("\n").map(t => t.trim()).filter(Boolean);
+    
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    
+    setPending(true);
+    setAudienceBannedTermsViolations([]);
+    
+    try {
+      const sourceText = sourceLanguage === 'hebrew' ? hebrew : (sourceLanguage === 'english' ? roughEnglish : hebrew);
+      const roughText = useRoughEnglish ? roughEnglish : undefined;
+      
+      const json = await processTranslationAPI({ 
+        hebrew: sourceLanguage === 'hebrew' ? sourceText : '', 
+        roughEnglish: useRoughEnglish ? roughText : (sourceLanguage === 'english' ? sourceText : ''), 
+        model, 
+        ...promptSettings,
+        glossary,
+        isRetry: false,
+        bannedTerms,
+        guidelines,
+        referenceMaterial,
+        sourceLanguage,
+        targetLanguage,
+        conversationHistory: conversationHistory.slice(-5),
+        mode: "audience-only" // Only generate audience version, don't override faithful
+      }, ac.signal);
+
+      // Only set audience version, don't touch editedText
+      if (json.audience_version) {
+        setAudienceDraft({
+          text: json.audience_version.text,
+          rationale: json.audience_version.rationale
+        });
+        
+        // Check banned terms only for audience version
+        if (bannedTerms.length > 0) {
+          const audienceCheck = validateEditedText(json.audience_version.text, { bannedTerms });
+          if (!audienceCheck.isValid) {
+            const audienceViolatedTerms = audienceCheck.violations
+              .filter(v => v.type === 'bannedTerm')
+              .map(v => v.term!)
+              .filter(Boolean);
+            setAudienceBannedTermsViolations(audienceViolatedTerms);
+          } else {
+            setAudienceBannedTermsViolations([]);
+          }
+        }
+      } else {
+        // Fallback: use edited_text as audience version if no specific audience_version returned
+        setAudienceDraft({
+          text: json.edited_text || "",
+          rationale: "Generated as audience-optimized version"
+        });
+      }
+      
+    } catch (e: any) {
+      console.error('Audience generation error:', e);
+      if (e.name === 'AbortError' || e.message?.includes('aborted')) {
+        return;
+      }
+      addToast({
+        type: "error",
+        title: "Audience Generation Error",
+        description: e?.message || "Failed to generate audience version"
+      });
+    } finally {
+      setPending(false);
+    }
+  }, [hebrew, roughEnglish, model, promptSettings, glossary, guidelines, referenceMaterial, sourceLanguage, targetLanguage, conversationHistory, useRoughEnglish, addToast]);
 
   const onClear = () => {
     abortRef.current?.abort();
@@ -371,7 +422,10 @@ export default function Page() {
   }, [onRun]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen app-container">
+      {/* Draggable title bar area for Electron */}
+      <div className="drag-region h-8 w-full absolute top-0 left-0 z-50 pointer-events-none" />
+      
       <RunBar 
         model={model} 
         setModel={setModel} 
@@ -450,7 +504,7 @@ export default function Page() {
               </div>
             </div>
             <button
-              onClick={() => onRun(true, "audience-both")}
+              onClick={onGenerateAudience}
               disabled={pending}
               className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-medium"
             >
@@ -717,67 +771,83 @@ export default function Page() {
                   </div>
                 )
               },
-              ...(audienceDraft ? [{
-                value: "audience",
-                label: "Audience Version",
-                content: (
-                  <div className="relative">
-                    <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
-                      <button
-                        onClick={() => {
-                          // Toggle between showing diff vs faithful and plain text
-                          setShowAudienceDiff(prev => !prev);
-                        }}
-                        className="px-2 py-1 rounded bg-blue-600 hover:bg-blue-700 text-xs"
-                      >
-                        {showAudienceDiff ? 'Show Text' : 'Diff vs Faithful'}
-                      </button>
-                      <button
-                        onClick={onGenerateAudience}
-                        disabled={pending}
-                        className="px-2 py-1 rounded bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-xs"
-                      >
-                        Regenerate
-                      </button>
-                      {audienceDraft.text && (
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(audienceDraft.text);
-                            addToast({
-                              type: "success",
-                              description: "Copied to clipboard!"
-                            });
-                          }}
-                          className="px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
-                        >
-                          Copy
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-4 pt-12">
-                      {showAudienceDiff && editedText ? (
-                        <DiffView original={editedText} edited={audienceDraft.text} />
-                      ) : (
-                        <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">
-                          {audienceDraft.text}
-                        </div>
-                      )}
-                      {audienceDraft.rationale && (
-                        <div className="mt-4 pt-4 border-t border-neutral-700">
-                          <div className="text-xs font-medium text-violet-400 mb-2">Rationale:</div>
-                          <div className="text-sm text-neutral-300 italic">
-                            {audienceDraft.rationale}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              }] : []),
+
               { value: "diff", label: "Diff", content: <DiffView original={roughEnglish} edited={editedText} /> }
             ]}
           />
         </section>
+
+        {/* Audience Version Output (separate section) */}
+        {audienceDraft && (
+          <section className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-violet-400">Audience Version</h2>
+              <button
+                onClick={onGenerateAudience}
+                disabled={pending}
+                className="px-3 py-1 rounded bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-sm"
+              >
+                Regenerate
+              </button>
+            </div>
+            <OutputTabs
+              tabs={[
+                {
+                  value: "audience-text",
+                  label: "Text",
+                  content: (
+                    <div className="relative">
+                      <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
+                        {audienceDraft.text && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(audienceDraft.text);
+                              addToast({
+                                type: "success",
+                                description: "Copied to clipboard!"
+                              });
+                            }}
+                            className="px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
+                          >
+                            Copy
+                          </button>
+                        )}
+                      </div>
+                      <div className="p-4 pt-12">
+                        <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">
+                          {audienceDraft.text}
+                        </div>
+                        {audienceDraft.rationale && (
+                          <div className="mt-4 pt-4 border-t border-neutral-700">
+                            <div className="text-xs font-medium text-violet-400 mb-2">Rationale:</div>
+                            <div className="text-sm text-neutral-300 italic">
+                              {audienceDraft.rationale}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  value: "audience-readability",
+                  label: "Readability",
+                  content: <ReadabilityPane text={audienceDraft.text} />
+                },
+                {
+                  value: "audience-diff-faithful",
+                  label: "Diff vs Faithful",
+                  content: editedText ? <DiffView original={editedText} edited={audienceDraft.text} /> : <div className="p-4 text-neutral-500">No faithful version to compare</div>
+                },
+                {
+                  value: "audience-diff-source",
+                  label: "Diff vs Source",
+                  content: <DiffView original={roughEnglish} edited={audienceDraft.text} />
+                }
+              ]}
+            />
+          </section>
+        )}
       </main>
 
       {/* Modal components */}

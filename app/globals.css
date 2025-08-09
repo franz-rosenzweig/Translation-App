@@ -141,3 +141,27 @@ html, body, #__next {
   font-size: 0.875rem;
   color: var(--muted);
 }
+
+/* Electron window dragging */
+.drag-region {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Make specific areas draggable on Electron */
+.app-container {
+  /* Only apply drag region styles on Electron/Desktop */
+  @supports (-webkit-app-region: drag) {
+    -webkit-app-region: drag;
+  }
+}
+
+/* Ensure interactive elements are not draggable */
+button, input, textarea, select, a, [role="button"], [tabindex], 
+.no-drag, [contenteditable], .tabs-list, .tabs-trigger, .tabs-content {
+  -webkit-app-region: no-drag;
+}

@@ -200,8 +200,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth: 400,
+    minHeight: 500,
     icon: path.join(__dirname, 'assets/icon.png'),
     webPreferences: {
       nodeIntegration: false,
@@ -210,8 +210,10 @@ function createWindow() {
       webSecurity: !isDev,
       preload: path.join(__dirname, 'preload.js') // We'll create this
     },
-    titleBarStyle: 'hiddenInset', // macOS style
-    trafficLightPosition: { x: 20, y: 20 }
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    trafficLightPosition: { x: 20, y: 20 },
+    // Enable dragging for the entire window content
+    movable: true
   });
 
   // Load the app
