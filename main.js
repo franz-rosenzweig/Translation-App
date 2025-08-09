@@ -91,7 +91,7 @@ async function testApiKey(apiKey) {
   }
 }
 
-// OpenAI API handler - now uses the full API route logic
+// OpenAI API handler - uses OpenAI directly with full feature support
 async function handleTranslationProcessing(event, payload) {
   try {
     // Get API key from storage or environment
@@ -101,26 +101,85 @@ async function handleTranslationProcessing(event, payload) {
       throw new Error('No OpenAI API key configured. Please add your API key in Settings.');
     }
 
-    // Set the API key for the process
-    process.env.OPENAI_API_KEY = apiKey;
-
-    // Import and use the actual API route logic
-    const { POST } = await import('./app/api/process/route.js');
+    // Import OpenAI and other dependencies
+    const { default: OpenAI } = await import('openai');
     
-    // Create a mock request object
-    const mockRequest = {
-      json: async () => payload
-    };
+    const openai = new OpenAI({
+      apiKey: apiKey,
+    });
 
-    // Call the actual API route
-    const response = await POST(mockRequest);
-    const result = await response.json();
+    // Use the model from payload or default
+    const model = payload.model || process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-    if (response.status !== 200) {
-      throw new Error(result.error || `API Error: ${response.status}`);
+    // Build the system prompt
+    let systemPrompt = "You are a professional translator. ";
+    
+    if (payload.sourceLanguage === 'hebrew' && payload.targetLanguage === 'english') {
+      systemPrompt += "Translate the Hebrew text to clear, natural English. ";
+    } else if (payload.sourceLanguage === 'english' && payload.targetLanguage === 'hebrew') {
+      systemPrompt += "Translate the English text to clear, natural Hebrew. ";
+    } else {
+      systemPrompt += `Translate from ${payload.sourceLanguage} to ${payload.targetLanguage}. `;
     }
 
-    return result;
+    systemPrompt += "Provide your response as JSON with 'edited_text' field containing the translation, and optional 'change_log', 'terms_glossary_hits', and 'flags' arrays.";
+
+    // Add guidelines if provided
+    if (payload.guidelines) {
+      systemPrompt += `\n\nTranslation Guidelines:\n${payload.guidelines}`;
+    }
+
+    // Add reference material if provided
+    if (payload.referenceMaterial) {
+      systemPrompt += `\n\nReference Material:\n${payload.referenceMaterial}`;
+    }
+
+    // Build user prompt
+    let userPrompt = "";
+    if (payload.hebrew) {
+      userPrompt += `Hebrew text: ${payload.hebrew}\n`;
+    }
+    if (payload.roughEnglish) {
+      userPrompt += `Rough English: ${payload.roughEnglish}\n`;
+    }
+
+    // Add style instructions
+    if (payload.knobs) {
+      userPrompt += `\nStyle preferences (1-10 scale):
+- Americanization: ${payload.knobs.americanization || 5}
+- Structure strictness: ${payload.knobs.structureStrictness || 5}
+- Tone strictness: ${payload.knobs.toneStrictness || 5}
+- Jargon tolerance: ${payload.knobs.jargonTolerance || 5}`;
+    }
+
+    // Add custom prompt override
+    if (payload.override) {
+      userPrompt += `\n\nAdditional instructions: ${payload.override}`;
+    }
+
+    // Call OpenAI
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response from OpenAI");
+
+    const result = JSON.parse(content);
+    
+    // Ensure the response has the expected format that matches the web API
+    return {
+      edited_text: result.translatedText || result.edited_text || result.translation || content,
+      change_log: result.change_log || [],
+      terms_glossary_hits: result.terms_glossary_hits || [],
+      flags: result.flags || []
+    };
+
   } catch (error) {
     console.error('Translation error:', error);
     throw error;

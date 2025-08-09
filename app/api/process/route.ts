@@ -17,7 +17,7 @@ const RETRY_DELAY = 1000; // 1 second
 async function callOpenAI(messages: any[], signal: AbortSignal, retryCount = 0) {
   try {
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       messages,
       response_format: { type: "json_object" },
     }, { signal });
