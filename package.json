@@ -58,6 +58,7 @@
     },
     "files": [
       "main.js",
+      "preload.js",
       "out/**/*",
       "node_modules/**/*"
     ],

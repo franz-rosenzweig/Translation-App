@@ -18,6 +18,11 @@ export default function ApiKeySettings({ isOpen, onClose, onApiKeyChange }: ApiK
 
   useEffect(() => {
     if (isOpen) {
+      console.log('ApiKeySettings opened');
+      console.log('window.electronAPI available:', !!window.electronAPI);
+      if (window.electronAPI) {
+        console.log('electronAPI methods:', Object.keys(window.electronAPI));
+      }
       loadApiKey();
     }
   }, [isOpen]);
@@ -33,7 +38,11 @@ export default function ApiKeySettings({ isOpen, onClose, onApiKeyChange }: ApiK
         setApiKey(savedKey || "");
         onApiKeyChange?.(!!savedKey);
       } else {
-        console.log('window.electronAPI not available'); // Debug log
+        console.log('window.electronAPI not available - running in browser mode?'); // Debug log
+        // For browser mode, try to get from localStorage as fallback
+        const savedKey = localStorage.getItem('openai-api-key');
+        setApiKey(savedKey || "");
+        onApiKeyChange?.(!!savedKey);
       }
     } catch (error) {
       console.error("Failed to load API key:", error);
@@ -67,7 +76,14 @@ export default function ApiKeySettings({ isOpen, onClose, onApiKeyChange }: ApiK
           onClose();
         }, 1500);
       } else {
-        console.log('window.electronAPI not available'); // Debug log
+        console.log('window.electronAPI not available - using localStorage'); // Debug log
+        // Fallback to localStorage for browser mode
+        localStorage.setItem('openai-api-key', apiKey.trim());
+        onApiKeyChange?.(true);
+        setTestResult('success');
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       }
     } catch (error) {
       console.error("Failed to save API key:", error);
@@ -97,7 +113,9 @@ export default function ApiKeySettings({ isOpen, onClose, onApiKeyChange }: ApiK
           setErrorMessage("Invalid API key or no access to OpenAI API");
         }
       } else {
-        console.log('window.electronAPI not available'); // Debug log
+        console.log('window.electronAPI not available - cannot test API key in browser mode'); // Debug log
+        setErrorMessage("API key testing not available in browser mode");
+        setTestResult('error');
       }
     } catch (error) {
       console.error("Failed to test API key:", error);

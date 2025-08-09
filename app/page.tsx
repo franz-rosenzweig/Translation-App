@@ -422,7 +422,7 @@ export default function Page() {
   }, [onRun]);
 
   return (
-    <div className="flex flex-col min-h-screen app-container">
+    <div className="flex flex-col min-h-screen max-h-screen app-container">
       {/* Draggable title bar area for Electron */}
       <div className="drag-region h-8 w-full absolute top-0 left-0 z-50 pointer-events-none" />
       
@@ -464,7 +464,13 @@ export default function Page() {
         }}
         pending={pending}
       />
-      <Toasts toasts={toasts} />
+      
+      {/* Scrollable content wrapper - captures all scroll events */}
+      <div 
+        className="flex-1 overflow-y-auto scrollbar-thin" 
+        style={{ scrollBehavior: 'smooth' }}
+      >
+        <Toasts toasts={toasts} />
       
       <PromptDrawer
         open={promptDrawerOpen}
@@ -514,7 +520,7 @@ export default function Page() {
         </div>
       )}
 
-      <main className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+      <main className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 min-h-0 flex-shrink-0">
         {/* Left: Inputs */}
         <section className="space-y-3">
           <div className="space-y-1">
@@ -779,7 +785,7 @@ export default function Page() {
 
         {/* Audience Version Output (separate section) */}
         {audienceDraft && (
-          <section className="mt-6">
+          <section className="mt-6 col-span-full">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold text-violet-400">Audience Version</h2>
               <button
@@ -790,65 +796,71 @@ export default function Page() {
                 Regenerate
               </button>
             </div>
-            <OutputTabs
-              tabs={[
-                {
-                  value: "audience-text",
-                  label: "Text",
-                  content: (
-                    <div className="relative">
-                      <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
-                        {audienceDraft.text && (
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(audienceDraft.text);
-                              addToast({
-                                type: "success",
-                                description: "Copied to clipboard!"
-                              });
-                            }}
-                            className="px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
-                          >
-                            Copy
-                          </button>
-                        )}
-                      </div>
-                      <div className="p-4 pt-12">
-                        <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">
-                          {audienceDraft.text}
+            <div className="min-h-[400px] bg-panel border border-neutral-800 rounded">
+              <OutputTabs
+                defaultValue="audience-text"
+                tabs={[
+                  {
+                    value: "audience-text",
+                    label: "Text",
+                    content: (
+                      <div className="relative">
+                        <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
+                          {audienceDraft.text && (
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(audienceDraft.text);
+                                addToast({
+                                  type: "success",
+                                  description: "Copied to clipboard!"
+                                });
+                              }}
+                              className="px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
+                            >
+                              Copy
+                            </button>
+                          )}
                         </div>
-                        {audienceDraft.rationale && (
-                          <div className="mt-4 pt-4 border-t border-neutral-700">
-                            <div className="text-xs font-medium text-violet-400 mb-2">Rationale:</div>
-                            <div className="text-sm text-neutral-300 italic">
-                              {audienceDraft.rationale}
-                            </div>
+                        <div className="p-4 pt-12">
+                          <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">
+                            {audienceDraft.text}
                           </div>
-                        )}
+                          {audienceDraft.rationale && (
+                            <div className="mt-4 pt-4 border-t border-neutral-700">
+                              <div className="text-xs font-medium text-violet-400 mb-2">Rationale:</div>
+                              <div className="text-sm text-neutral-300 italic">
+                                {audienceDraft.rationale}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )
-                },
-                {
-                  value: "audience-readability",
-                  label: "Readability",
-                  content: <ReadabilityPane text={audienceDraft.text} />
-                },
-                {
-                  value: "audience-diff-faithful",
-                  label: "Diff vs Faithful",
-                  content: editedText ? <DiffView original={editedText} edited={audienceDraft.text} /> : <div className="p-4 text-neutral-500">No faithful version to compare</div>
-                },
-                {
-                  value: "audience-diff-source",
-                  label: "Diff vs Source",
-                  content: <DiffView original={roughEnglish} edited={audienceDraft.text} />
-                }
-              ]}
-            />
+                    )
+                  },
+                  {
+                    value: "audience-readability",
+                    label: "Readability",
+                    content: <ReadabilityPane text={audienceDraft.text} />
+                  },
+                  {
+                    value: "audience-diff-faithful",
+                    label: "vs Faithful",
+                    content: editedText ? <DiffView original={editedText} edited={audienceDraft.text} /> : <div className="p-4 text-neutral-500">No faithful version to compare</div>
+                  },
+                  {
+                    value: "audience-diff-source",
+                    label: "vs Source",
+                    content: <DiffView original={roughEnglish} edited={audienceDraft.text} />
+                  }
+                ]}
+              />
+            </div>
           </section>
         )}
       </main>
+
+      {/* Spacer to ensure scrollable area at bottom */}
+      <div className="h-8 flex-shrink-0"></div>
 
       {/* Modal components */}
       <SessionManager 
@@ -879,6 +891,7 @@ export default function Page() {
         onClose={() => setShowApiKeySettings(false)}
         onApiKeyChange={setHasApiKey}
       />
+      </div>
     </div>
   );
 }
