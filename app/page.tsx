@@ -49,7 +49,7 @@ export default function Page() {
   const [promptSettings, setPromptSettings] = useState({
     override: "",
     knobs: {
-      americanization: 5,
+      localization: 5,
       structureStrictness: 5,
       toneStrictness: 5,
       jargonTolerance: 5
@@ -584,7 +584,7 @@ export default function Page() {
               setPromptSettings({
                 override: "",
                 knobs: {
-                  americanization: 1,
+                  localization: 1,
                   structureStrictness: 1,
                   toneStrictness: 1,
                   jargonTolerance: 1

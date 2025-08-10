@@ -98,10 +98,27 @@ If mode is audience-only, you may omit change_log and other arrays except flags 
         glossary.length ? `Glossary terms: ${JSON.stringify(glossary)}` : "",
         Object.keys(knobs).length ? `\n\nTRANSLATION INTENSITY SETTINGS (1=minimal, 10=maximum):\n${Object.entries(knobs).map(([key, value]) => {
           const numValue = Number(value);
+          
+          // Handle cultural adaptation based on translation direction
+          if (key === 'americanization' || key === 'localization') {
+            const isToHebrew = targetLanguage.toLowerCase().includes('hebrew') || targetLanguage === 'he';
+            const isFromHebrew = sourceLanguage.toLowerCase().includes('hebrew') || sourceLanguage === 'he';
+            
+            if (isToHebrew) {
+              // English to Hebrew - use Israelization
+              return `• Israelization Level ${numValue}/10: ${numValue <= 3 ? 'Preserve original cultural context' : numValue <= 7 ? 'Moderate Israeli cultural adaptation' : 'Strong Israeli cultural adaptation with local idioms and references'}`;
+            } else if (isFromHebrew) {
+              // Hebrew to English - use Americanization
+              return `• Americanization Level ${numValue}/10: ${numValue <= 3 ? 'Preserve original cultural context' : numValue <= 7 ? 'Moderate American cultural adaptation' : 'Strong American cultural adaptation with local idioms and references'}`;
+            } else {
+              // Generic cultural adaptation
+              return `• Cultural Adaptation Level ${numValue}/10: ${numValue <= 3 ? 'Preserve original cultural context' : numValue <= 7 ? 'Moderate cultural adaptation for target audience' : 'Strong cultural adaptation with local idioms and references'}`;
+            }
+          }
+          
           switch(key) {
-            case 'americanization': return `• Americanization Level ${numValue}/10: ${numValue <= 3 ? 'Preserve original phrasing' : numValue <= 7 ? 'Moderate American adaptation' : 'Strong American idioms and phrasing'}`;
             case 'structureStrictness': return `• Structure Adherence ${numValue}/10: ${numValue <= 3 ? 'Allow flexible restructuring' : numValue <= 7 ? 'Maintain general structure' : 'Preserve exact sentence order'}`;
-            case 'toneStrictness': return `• Tone Matching ${numValue}/10: ${numValue <= 3 ? 'Natural English tone' : numValue <= 7 ? 'Balance original and target tone' : 'Preserve exact original tone'}`;
+            case 'toneStrictness': return `• Tone Matching ${numValue}/10: ${numValue <= 3 ? 'Natural target language tone' : numValue <= 7 ? 'Balance original and target tone' : 'Preserve exact original tone'}`;
             case 'jargonTolerance': return `• Technical Terms ${numValue}/10: ${numValue <= 3 ? 'Simplify technical language' : numValue <= 7 ? 'Keep moderate jargon' : 'Preserve all technical terminology'}`;
             default: return `${key}: ${value}`;
           }

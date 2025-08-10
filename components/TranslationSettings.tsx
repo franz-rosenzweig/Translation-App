@@ -16,7 +16,7 @@ type AudienceConfig = {
 type PromptSettings = {
   override: string;
   knobs: {
-    americanization: number;
+    localization: number;
     structureStrictness: number;
     toneStrictness: number;
     jargonTolerance: number;
@@ -49,7 +49,7 @@ export default function TranslationSettings({
   const [override, setOverride] = useState("");
   const [savedOverride, setSavedOverride] = useState("");
   const [knobs, setKnobs] = useState({
-    americanization: 5,
+    localization: 5,
     structureStrictness: 5,
     toneStrictness: 5,
     jargonTolerance: 5
@@ -74,18 +74,42 @@ export default function TranslationSettings({
         setSavedOverride(settings.override);
       }
       if (settings.knobs) {
-        setKnobs(settings.knobs);
+        // Migration: handle both old americanization and new localization
+        const migratedKnobs = {
+          localization: settings.knobs.localization ?? settings.knobs.americanization ?? 5,
+          structureStrictness: settings.knobs.structureStrictness ?? 5,
+          toneStrictness: settings.knobs.toneStrictness ?? 5,
+          jargonTolerance: settings.knobs.jargonTolerance ?? 5
+        };
+        setKnobs(migratedKnobs);
       }
       if (settings.toggles) {
         setToggles(settings.toggles);
       }
     }
     
-    // Legacy support for saved override
+    // Legacy support for saved override and knobs
     const saved = localStorage.getItem("promptOverride");
     if (saved && !storedMaterials.promptSettings?.override) {
       setOverride(saved);
       setSavedOverride(saved);
+    }
+    
+    const savedKnobs = localStorage.getItem("knobs");
+    if (savedKnobs && !storedMaterials.promptSettings?.knobs) {
+      try {
+        const parsedKnobs = JSON.parse(savedKnobs);
+        // Migration: handle both old americanization and new localization
+        const migratedKnobs = {
+          localization: parsedKnobs.localization ?? parsedKnobs.americanization ?? 5,
+          structureStrictness: parsedKnobs.structureStrictness ?? 5,
+          toneStrictness: parsedKnobs.toneStrictness ?? 5,
+          jargonTolerance: parsedKnobs.jargonTolerance ?? 5
+        };
+        setKnobs(migratedKnobs);
+      } catch (e) {
+        console.warn('Failed to parse saved knobs:', e);
+      }
     }
   }, []);
 
@@ -116,7 +140,7 @@ export default function TranslationSettings({
     const defaultSettings = {
       override: "",
       knobs: {
-        americanization: 5,
+        localization: 5,
         structureStrictness: 5,
         toneStrictness: 5,
         jargonTolerance: 5
@@ -219,7 +243,7 @@ export default function TranslationSettings({
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <label className="text-sm">Americanization</label>
+                        <label className="text-sm">Cultural Localization</label>
                         <Tooltip.Provider>
                           <Tooltip.Root>
                             <Tooltip.Trigger asChild>
@@ -227,20 +251,20 @@ export default function TranslationSettings({
                             </Tooltip.Trigger>
                             <Tooltip.Portal>
                               <Tooltip.Content className="bg-popover border border-default rounded px-2 py-1 text-xs max-w-xs z-50">
-                                How much to convert British to American English (spelling, vocabulary)
+                                Cultural adaptation for target audience - Americanization for Hebrew→English, Israelization for English→Hebrew
                                 <Tooltip.Arrow className="fill-popover" />
                               </Tooltip.Content>
                             </Tooltip.Portal>
                           </Tooltip.Root>
                         </Tooltip.Provider>
-                        <span className="text-xs text-muted ml-auto">{knobs.americanization}</span>
+                        <span className="text-xs text-muted ml-auto">{knobs.localization}</span>
                       </div>
                       <input
                         type="range"
                         min="1"
                         max="10"
-                        value={knobs.americanization}
-                        onChange={(e) => setKnobs({ ...knobs, americanization: parseInt(e.target.value) })}
+                        value={knobs.localization}
+                        onChange={(e) => setKnobs({ ...knobs, localization: parseInt(e.target.value) })}
                         className="w-full"
                       />
                     </div>

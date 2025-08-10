@@ -52,7 +52,7 @@ A de## Features
 - **Sentence Complexity**: Identifies and flags overly complex structures
 
 ### ⚙️ **Granular Translation Control**
-- **Translation Settings**: Fine-tune americanization, structure strictness, tone strictness, and jargon tolerance
+- **Translation Settings**: Fine-tune cultural localization, structure strictness, tone strictness, and jargon tolerance
 - **Audience Configuration**: Custom prompts and settings for different target audiences
 - **Processing Options**: Control paragraph breaks, sentence length, and verb complexity
 - **Custom Prompts**: Override default behavior with specific instructions
@@ -130,7 +130,7 @@ Access via sidebar → Translation Settings button for combined configuration:
 
 **Prompt Settings Tab:**
 - **Override Text**: Custom instructions for the AI
-- **Translation Sliders**: Americanization, structure, tone, jargon (1-10 scale)
+- **Translation Sliders**: Cultural Localization, structure, tone, jargon (1-10 scale)
 - **Processing Options**: Paragraph breaks, sentence length, verb complexity
 - **Banned Terms**: Configure prohibited terminology
 
@@ -196,7 +196,7 @@ Access theme settings via the sidebar → Theme selector.
 
 | Setting | Range | Description |
 |---------|-------|-------------|
-| **Americanization** | 1-10 | Adaptation strength for American English conventions |
+| **Cultural Localization** | 1-10 | Bidirectional cultural adaptation - Americanization for Hebrew→English, Israelization for English→Hebrew |
 | **Structure Strictness** | 1-10 | Preservation vs. restructuring of original syntax |
 | **Tone Strictness** | 1-10 | Fidelity to original authorial voice |
 | **Jargon Tolerance** | 1-10 | Technical terminology preservation vs. simplification |

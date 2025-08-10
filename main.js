@@ -151,7 +151,7 @@ async function handleTranslationProcessing(event, payload) {
     // Add style instructions
     if (payload.knobs) {
       userPrompt += `\nStyle preferences (1-10 scale):
-- Americanization: ${payload.knobs.americanization || 5}
+- Cultural Localization: ${payload.knobs.localization || payload.knobs.americanization || 5}
 - Structure strictness: ${payload.knobs.structureStrictness || 5}
 - Tone strictness: ${payload.knobs.toneStrictness || 5}
 - Jargon tolerance: ${payload.knobs.jargonTolerance || 5}`;
