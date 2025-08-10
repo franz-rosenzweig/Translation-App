@@ -41,13 +41,6 @@ export default function Sidebar({
       <div className="px-3 pt-7 pb-3 sm:pt-9 border-b border-default flex items-center justify-between">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                עברית
-              </div>
-              <div className="absolute -right-1 -top-1 text-xs">↔</div>
-              <div className="text-xs font-medium text-muted mt-0.5">English</div>
-            </div>
             <div className="ml-2">
               <h1 className="font-bold text-sm">TranslNathan</h1>
               <div className="text-xs text-muted">AI Translation Editor</div>

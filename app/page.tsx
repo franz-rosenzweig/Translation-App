@@ -635,7 +635,7 @@ export default function Page() {
                               description: "Copied to clipboard!"
                             });
                           }}
-                          className="px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
+                          className="px-2 py-1 rounded bg-accent/20 hover:bg-accent/30 border border-default text-xs transition-colors"
                         >
                           Copy
                         </button>
@@ -685,7 +685,7 @@ export default function Page() {
                             description: "Copied to clipboard!"
                           });
                         }}
-                        className="absolute top-2 right-2 px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
+                        className="absolute top-2 right-2 px-2 py-1 rounded bg-accent/20 hover:bg-accent/30 border border-default text-xs transition-colors"
                       >
                         Copy
                       </button>
@@ -782,7 +782,7 @@ export default function Page() {
                                 navigator.clipboard.writeText(entry.result);
                                 addToast({ description: "Copied to clipboard!", type: "success" });
                               }}
-                              className="px-2 py-1 text-xs border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                              className="px-2 py-1 text-xs border border-default rounded hover:bg-accent/10 transition-colors"
                             >
                               Copy
                             </button>
@@ -831,7 +831,7 @@ export default function Page() {
                                   description: "Copied to clipboard!"
                                 });
                               }}
-                              className="px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600 text-xs"
+                              className="px-2 py-1 rounded bg-accent/20 hover:bg-accent/30 border border-default text-xs transition-colors"
                             >
                               Copy
                             </button>

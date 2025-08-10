@@ -163,36 +163,40 @@ export default function TranslationSettings({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Dialog.Content className="fixed top-0 right-0 h-full w-full max-w-md bg-panel border-l border-default focus:outline-none flex flex-col z-50">
-          <div className="flex-shrink-0 px-6 pt-8 pb-6 border-b border-default">
-            <Dialog.Title className="text-lg font-semibold mb-3">Translation Settings</Dialog.Title>
-            <Dialog.Description className="text-sm text-muted leading-relaxed">
-              Configure prompt settings and audience version parameters.
-            </Dialog.Description>
-            
-            {/* Tab Navigation */}
-            <div className="flex mt-4 border border-default rounded overflow-hidden">
-              <button
-                className={`flex-1 px-3 py-2 text-sm transition-colors ${
-                  activeTab === 'prompt' 
-                    ? 'bg-accent/20 text-accent border-r border-default' 
-                    : 'hover:bg-accent/10 border-r border-default'
-                }`}
-                onClick={() => setActiveTab('prompt')}
-              >
-                ⚙️ Prompt Settings
-              </button>
-              <button
-                className={`flex-1 px-3 py-2 text-sm transition-colors ${
-                  activeTab === 'audience' 
-                    ? 'bg-accent/20 text-accent' 
-                    : 'hover:bg-accent/10'
-                }`}
-                onClick={() => setActiveTab('audience')}
-              >
-                👥 Audience Version
-              </button>
-            </div>
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] bg-panel border border-default rounded-lg focus:outline-none flex flex-col z-50">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-default">
+            <Dialog.Title className="text-lg font-semibold">Translation Settings</Dialog.Title>
+            <button
+              onClick={() => onOpenChange(false)}
+              className="text-muted hover:text-foreground transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex gap-1 px-4 pb-2 border-b border-default">
+            <button
+              onClick={() => setActiveTab('prompt')}
+              className={`px-3 py-2 text-sm rounded transition-colors ${
+                activeTab === 'prompt' 
+                  ? 'bg-accent text-accent-foreground' 
+                  : 'hover:bg-accent/10'
+              }`}
+            >
+              Prompt Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('audience')}
+              className={`px-3 py-2 text-sm rounded transition-colors ${
+                activeTab === 'audience' 
+                  ? 'bg-accent text-accent-foreground' 
+                  : 'hover:bg-accent/10'
+              }`}
+            >
+              Audience Settings
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 py-6">

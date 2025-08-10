@@ -32,7 +32,7 @@ export default function BannedTermsConfig({ onChange }: Props) {
       <textarea
         value={termsText}
         onChange={(e) => handleChange(e.target.value)}
-        className="w-full h-20 bg-panel border border-neutral-800 rounded p-2 text-sm font-mono"
+        className="w-full h-20 bg-panel border border-default rounded p-2 text-sm font-mono text-foreground resize-none"
         placeholder="Enter terms to ban..."
       />
     </div>

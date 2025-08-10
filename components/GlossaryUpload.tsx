@@ -61,7 +61,7 @@ export default function GlossaryUpload({ onGlossaryChange }: Props) {
           type="file"
           accept=".csv"
           onChange={handleFileUpload}
-          className="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-neutral-700 file:hover:bg-neutral-600 file:text-sm"
+          className="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-accent/20 file:hover:bg-accent/30 file:text-foreground file:text-sm file:border file:border-default"
         />
       </label>
       {error && (

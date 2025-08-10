@@ -15,7 +15,7 @@ export default function LanguageSelector({ value, onChange, className = '' }: La
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Language)}
-        className="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+        className="text-sm border border-default rounded px-2 py-1 bg-panel hover:bg-accent/10 text-foreground transition-colors"
       >
         <option value="hebrew">עברית (Hebrew)</option>
         <option value="english">English</option>

@@ -91,7 +91,7 @@ export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelin
           <div className="flex gap-2 mb-4">
             <button
               onClick={loadDefaultGuidelines}
-              className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="px-3 py-1 text-sm border border-default rounded hover:bg-accent/10 transition-colors"
             >
               Load Default
             </button>
@@ -104,7 +104,7 @@ export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelin
             />
             <label
               htmlFor="guidelines-upload"
-              className="flex items-center gap-1 px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1 text-sm border border-default rounded hover:bg-accent/10 transition-colors cursor-pointer"
             >
               <Upload className="w-4 h-4" />
               Upload
@@ -119,7 +119,7 @@ export default function GuidelinesUploader({ onGuidelinesChange, currentGuidelin
               <textarea
                 value={guidelines}
                 onChange={handleTextChange}
-                className="w-full h-64 p-3 border rounded-md bg-white dark:bg-gray-800 font-mono text-sm"
+                className="w-full h-64 p-3 border border-default rounded-md bg-panel text-foreground font-mono text-sm resize-none"
                 placeholder="Enter your translation guidelines here, or upload a markdown file..."
               />
             </div>
