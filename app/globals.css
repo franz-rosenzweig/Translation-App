@@ -203,7 +203,6 @@ button, input, textarea, select, a, [role="button"], [tabindex],
 /* Simple scroll capture approach */
 html, body {
   height: 100%;
-  overflow: hidden;
 }
 
 /* Main app should capture all scroll events */
@@ -214,4 +213,28 @@ body * {
 /* Override for input elements */
 textarea, input, select {
   scroll-behavior: auto;
+}
+
+/* Enhanced button styles for better UI */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
+}
+
+.btn-secondary {
+  @apply bg-panel border border-default hover:bg-accent/10 px-3 py-1.5 rounded transition-colors;
+}
+
+/* Improve button focus states */
+button:focus-visible {
+  @apply outline-2 outline-offset-2 outline-accent;
+}
+
+/* Subtle animations for better UX */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.pulse-subtle {
+  animation: pulse-subtle 2s infinite;
 }

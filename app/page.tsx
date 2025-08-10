@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import OutputTabs from "@/components/OutputTabs";
-import RunBar from "@/components/RunBar";
+import Sidebar from "@/components/Sidebar";
+import SimpleHeader from "@/components/SimpleHeader";
+import RunButton from "@/components/RunButton";
 import ReadabilityPane from "@/components/ReadabilityPane";
-import PromptDrawer from "@/components/PromptDrawer";
+import TranslationSettings from "@/components/TranslationSettings";
 import DiffView from "@/components/DiffView";
 import GlossaryUpload from "@/components/GlossaryUpload";
 import Toasts, { useToasts } from "@/components/Toasts";
@@ -31,7 +33,7 @@ export default function Page() {
   const [audienceDraft, setAudienceDraft] = useState<{ text: string; rationale?: string } | null>(null);
   const [showAudienceDiff, setShowAudienceDiff] = useState(false);
   const [notes, setNotes] = useState<string>("");
-  const [promptDrawerOpen, setPromptDrawerOpen] = useState(false);
+  const [showTranslationSettings, setShowTranslationSettings] = useState(false);
   const [showSessionManager, setShowSessionManager] = useState(false);
   const [showGuidelinesUploader, setShowGuidelinesUploader] = useState(false);
   const [showReferenceMaterial, setShowReferenceMaterial] = useState(false);
@@ -39,6 +41,11 @@ export default function Page() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [showApiKeySettings, setShowApiKeySettings] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [audienceConfig, setAudienceConfig] = useState({
+    prompt: "",
+    audience: "General public",
+    notes: ""
+  });
   const [promptSettings, setPromptSettings] = useState({
     override: "",
     knobs: {
@@ -410,10 +417,10 @@ export default function Page() {
         e.preventDefault();
         onRun();
       }
-      // Toggle Prompt Drawer: Cmd/Ctrl + /
+      // Toggle Translation Settings: Cmd/Ctrl + /
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault();
-        setPromptDrawerOpen(prev => !prev);
+        setShowTranslationSettings(prev => !prev);
       }
     };
 
@@ -422,15 +429,15 @@ export default function Page() {
   }, [onRun]);
 
   return (
-    <div className="h-screen overflow-y-auto">
-      {/* Draggable title bar area for Electron */}
-      <div className="drag-region h-8 w-full absolute top-0 left-0 z-50 pointer-events-none" />
+    <div className="h-screen flex">
+      {/* Draggable title bar area for Electron - larger area for macOS window controls */}
+      <div className="drag-region h-12 w-full absolute top-0 left-0 z-50 pointer-events-none" />
       
-      <RunBar 
+      {/* Sidebar */}
+      <Sidebar 
         model={model} 
         setModel={setModel} 
-        onRun={() => onRun()} 
-        onOpenPromptDrawer={() => setPromptDrawerOpen(true)}
+        onOpenTranslationSettings={() => setShowTranslationSettings(true)}
         onOpenSessionManager={() => setShowSessionManager(true)}
         onOpenGuidelinesUploader={() => setShowGuidelinesUploader(true)}
         onOpenReferenceMaterial={() => setShowReferenceMaterial(true)}
@@ -438,84 +445,68 @@ export default function Page() {
         theme={theme}
         onThemeChange={setTheme}
         hasApiKey={hasApiKey}
-        onClear={() => {
-          onClear();
-          setPromptSettings({
-            override: "",
-            knobs: {
-              americanization: 1,
-              structureStrictness: 1,
-              toneStrictness: 1,
-              jargonTolerance: 1
-            },
-            toggles: {
-              preserveParagraphs: true,
-              shorterSentences: false,
-              plainVerbs: true
-            }
-          });
-          localStorage.removeItem("promptOverride");
-          localStorage.removeItem("knobs");
-          localStorage.removeItem("toggles");
-          addToast({
-            type: "info",
-            description: "Started new session"
-          });
-        }}
-        pending={pending}
-      />
-      
-      <Toasts toasts={toasts} />
-      
-      <PromptDrawer
-        open={promptDrawerOpen}
-        onOpenChange={setPromptDrawerOpen}
-        onApply={setPromptSettings}
       />
 
-      {/* Banned Terms Violation Banner */}
-      {bannedTermsViolations.length > 0 && (
-        <div className="bg-red-500/20 border border-red-500 rounded mx-4 mt-2 p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium text-red-400">Banned terms detected in faithful translation:</div>
-              <div className="text-sm text-red-300 mt-1">
-                {bannedTermsViolations.map(term => `"${term}"`).join(", ")}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Simple Header */}
+        <SimpleHeader />
+        
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto">
+          <Toasts toasts={toasts} />
+          
+          <TranslationSettings
+            open={showTranslationSettings}
+            onOpenChange={setShowTranslationSettings}
+            onApplyPrompt={setPromptSettings}
+            audienceConfig={audienceConfig}
+            onAudienceConfigChange={setAudienceConfig}
+          />
+
+          {/* Banned Terms Violation Banner */}
+          {bannedTermsViolations.length > 0 && (
+            <div className="bg-red-500/20 border border-red-500 rounded mx-4 mt-2 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-red-400">Banned terms detected in faithful translation:</div>
+                  <div className="text-sm text-red-300 mt-1">
+                    {bannedTermsViolations.map(term => `"${term}"`).join(", ")}
+                  </div>
+                </div>
+                <button
+                  onClick={onEnforceRetry}
+                  disabled={pending}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-medium"
+                >
+                  Re-ask with enforcement
+                </button>
               </div>
             </div>
-            <button
-              onClick={onEnforceRetry}
-              disabled={pending}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-medium"
-            >
-              Re-ask with enforcement
-            </button>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Audience Banned Terms Violation Banner */}
-      {audienceBannedTermsViolations.length > 0 && (
-        <div className="bg-orange-500/20 border border-orange-500 rounded mx-4 mt-2 p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium text-orange-400">Banned terms detected in audience version:</div>
-              <div className="text-sm text-orange-300 mt-1">
-                {audienceBannedTermsViolations.map(term => `"${term}"`).join(", ")}
+          {/* Audience Banned Terms Violation Banner */}
+          {audienceBannedTermsViolations.length > 0 && (
+            <div className="bg-orange-500/20 border border-orange-500 rounded mx-4 mt-2 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-orange-400">Banned terms detected in audience version:</div>
+                  <div className="text-sm text-orange-300 mt-1">
+                    {audienceBannedTermsViolations.map(term => `"${term}"`).join(", ")}
+                  </div>
+                </div>
+                <button
+                  onClick={onGenerateAudience}
+                  disabled={pending}
+                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-medium"
+                >
+                  Regenerate Audience Version
+                </button>
               </div>
             </div>
-            <button
-              onClick={onGenerateAudience}
-              disabled={pending}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-medium"
-            >
-              Regenerate Audience Version
-            </button>
-          </div>
-        </div>
-      )}
+          )}
 
-      <main className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 flex-shrink-0 min-h-screen">
+          <main className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 flex-shrink-0 min-h-screen">
         {/* Left: Inputs */}
         <section className="space-y-3">
           <div className="space-y-1">
@@ -584,6 +575,36 @@ export default function Page() {
             )}
           </div>
           <GlossaryUpload onGlossaryChange={setGlossary} />
+          
+          {/* Run Button at bottom of source text area */}
+          <RunButton 
+            onRun={() => onRun()} 
+            onClear={() => {
+              onClear();
+              setPromptSettings({
+                override: "",
+                knobs: {
+                  americanization: 1,
+                  structureStrictness: 1,
+                  toneStrictness: 1,
+                  jargonTolerance: 1
+                },
+                toggles: {
+                  preserveParagraphs: true,
+                  shorterSentences: false,
+                  plainVerbs: true
+                }
+              });
+              localStorage.removeItem("promptOverride");
+              localStorage.removeItem("knobs");
+              localStorage.removeItem("toggles");
+              addToast({
+                type: "info",
+                description: "Started new session"
+              });
+            }}
+            pending={pending}
+          />
         </section>
 
         {/* Right: Outputs */}
@@ -886,6 +907,11 @@ export default function Page() {
         onClose={() => setShowApiKeySettings(false)}
         onApiKeyChange={setHasApiKey}
       />
+          
+          {/* Spacer to ensure scrollable area at bottom */}
+          <div className="h-screen"></div>
+        </div>
+      </div>
     </div>
   );
 }
