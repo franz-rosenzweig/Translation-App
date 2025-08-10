@@ -422,7 +422,7 @@ export default function Page() {
   }, [onRun]);
 
   return (
-    <div className="flex flex-col min-h-screen max-h-screen app-container">
+    <div className="h-screen overflow-y-auto">
       {/* Draggable title bar area for Electron */}
       <div className="drag-region h-8 w-full absolute top-0 left-0 z-50 pointer-events-none" />
       
@@ -465,12 +465,7 @@ export default function Page() {
         pending={pending}
       />
       
-      {/* Scrollable content wrapper - captures all scroll events */}
-      <div 
-        className="flex-1 overflow-y-auto scrollbar-thin" 
-        style={{ scrollBehavior: 'smooth' }}
-      >
-        <Toasts toasts={toasts} />
+      <Toasts toasts={toasts} />
       
       <PromptDrawer
         open={promptDrawerOpen}
@@ -520,7 +515,7 @@ export default function Page() {
         </div>
       )}
 
-      <main className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 min-h-0 flex-shrink-0">
+      <main className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 flex-shrink-0 min-h-screen">
         {/* Left: Inputs */}
         <section className="space-y-3">
           <div className="space-y-1">
@@ -857,10 +852,10 @@ export default function Page() {
             </div>
           </section>
         )}
-      </main>
 
-      {/* Spacer to ensure scrollable area at bottom */}
-      <div className="h-8 flex-shrink-0"></div>
+        {/* Spacer to ensure scrollable area at bottom */}
+        <div className="h-screen"></div>
+      </main>
 
       {/* Modal components */}
       <SessionManager 
@@ -891,7 +886,6 @@ export default function Page() {
         onClose={() => setShowApiKeySettings(false)}
         onApiKeyChange={setHasApiKey}
       />
-      </div>
     </div>
   );
 }

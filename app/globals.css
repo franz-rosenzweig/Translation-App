@@ -200,35 +200,18 @@ button, input, textarea, select, a, [role="button"], [tabindex],
   scrollbar-width: none;
 }
 
-/* Ensure scroll events are captured everywhere */
-.app-container {
-  height: 100vh;
-  position: relative;
+/* Simple scroll capture approach */
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
-/* Make the scrollable wrapper capture all scroll events */
-.app-container .flex-1 {
-  position: relative;
-  z-index: 1;
-}
-
-/* Ensure all content areas are scrollable and can receive events */
-* {
+/* Main app should capture all scroll events */
+body * {
   scroll-behavior: smooth;
 }
 
-/* Make sure the main scrollable container fills available space and captures events */
-main {
-  width: 100%;
-  position: relative;
-}
-
-/* Ensure sections don't block scroll events */
-section {
-  pointer-events: auto;
-}
-
-/* Override for specific interactive elements that need immediate scroll response */
+/* Override for input elements */
 textarea, input, select {
   scroll-behavior: auto;
 }
