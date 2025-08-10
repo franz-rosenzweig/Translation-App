@@ -1,274 +1,387 @@
 # TranslNathan 🔄
 
-**Professional Hebrew-English AI Translation Editor with Style Awareness**
+A de## Features
 
-TranslNathan is a sophisticated web application designed for professional translators, editors, and content creators who need high-quality, style-aware translation between Hebrew and English. Built with advanced AI integration and real-time readability analysis, it goes beyond simple translation to deliver polished, publication-ready content.
+### Translation Stuff
+- GPT-4 integration for decent Hebrew ↔ English translation
+- Can adapt text for different audiences (kids, academics, etc.)
+- Keeps your writing style while making it sound natural in the target language
+- Upload reference materials to teach the AI your preferred style
+
+### UI
+- Collapsible sidebar like ChatGPT
+- Combined settings modal instead of scattered options
+- Light/dark themes
+- Readability analysis with color highlighting
+
+### Useful Features
+- Save/restore translation sessions
+- Upload translation guidelines and glossaries
+- Side-by-side diff view to compare versions
+- Banned terms management app for Hebrew-English translation using AI. Built with Next.js, Electron, and GPT models - basically ChatGPT but specifically tuned for Hebrew translation work.
+
+*Note: This app was built with AI assistance.*
 
 ---
 
 ## 🌟 Key Features
 
 ### 🧠 **AI-Powered Translation Editing**
-- **GPT-5 Integration**: Leverages OpenAI's latest models for superior translation quality
+- **GPT Integration**: Leverages OpenAI's models (GPT-4, GPT-5-mini) for superior translation quality
 - **Bidirectional Support**: Hebrew ↔ English translation with context awareness
 - **Style Preservation**: Maintains authorial voice while adapting to target language conventions
+- **Audience Adaptation**: Generate tailored versions for specific audiences (general public, academic, children, business)
 
-### 📚 **Reference Material Integration**
-- **Style Emulation**: Upload writing samples to guide AI style adaptation
-- **Author Voice Matching**: Reference material from specific authors (e.g., Alisa Cohn, William Zinsser)
-- **Persistent Storage**: Your reference materials are saved automatically
+### 🎨 **Modern UI/UX Design**
+- **Collapsible Sidebar**: ChatGPT-style sidebar with hamburger menu navigation
+- **Unified Settings Modal**: Combined prompt and audience settings in tabbed interface
+- **Multiple Themes**: Light and dark modes with proper contrast and accessibility
+- **Responsive Layout**: Optimized for desktop use with proper window controls
+- **Clean Typography**: Professional interface designed for extended use
 
-### 📋 **Translation Guidelines Management**
-- **Custom Guidelines**: Upload and maintain translation style guides
-- **Industry Standards**: Built-in support for professional translation conventions
-- **Automatic Application**: Guidelines are applied consistently across all translations
+### � **Advanced Content Management**
+- **Reference Material Integration**: Upload writing samples to guide AI style adaptation
+- **Translation Guidelines**: Upload and maintain custom translation style guides
+- **Session Management**: Save and restore complete translation sessions
+- **Glossary Support**: Custom terminology management and banned terms
 
-### 🎨 **Professional UI/UX**
-- **Multiple Themes**: GitHub Light/Dark, Solarized, Monokai, One Light
-- **Responsive Design**: Works seamlessly across desktop and mobile devices
-- **Accessibility**: Full keyboard navigation and screen reader support
-
-### 📊 **Advanced Text Analysis**
+### 📊 **Sophisticated Text Analysis**
 - **Hemingway-Style Readability**: Real-time analysis with color-coded feedback
 - **Grade Level Scoring**: Ensures content meets target reading levels
+- **Diff View**: Compare original, edited, and audience versions side-by-side
 - **Sentence Complexity**: Identifies and flags overly complex structures
 
-### ⚙️ **Granular Control**
-- **Translation Intensity**: 10-point scales for americanization, structure, tone, and jargon
+### ⚙️ **Granular Translation Control**
+- **Translation Settings**: Fine-tune americanization, structure strictness, tone strictness, and jargon tolerance
+- **Audience Configuration**: Custom prompts and settings for different target audiences
+- **Processing Options**: Control paragraph breaks, sentence length, and verb complexity
 - **Custom Prompts**: Override default behavior with specific instructions
-- **Banned Terms**: Configure prohibited terminology
-- **Session Management**: Save and restore translation sessions
 
 ---
 
-## 🛠 Technical Architecture
+## Tech Stack
 
-### **Frontend Stack**
-- **Framework**: [Next.js 15](https://nextjs.org/) with App Router
-- **Language**: TypeScript for type safety and developer experience
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) with custom CSS variables for theming
-- **UI Components**: [Radix UI](https://www.radix-ui.com/) for accessible, unstyled components
-- **Icons**: [Lucide React](https://lucide.dev/) for consistent iconography
-
-### **Backend & AI**
-- **API Routes**: Next.js API routes for server-side processing
-- **AI Provider**: [OpenAI GPT Models](https://openai.com/api/) with structured JSON responses
-- **Text Processing**: Custom algorithms for readability analysis and highlighting
-- **File Handling**: Browser-based file upload with multiple format support
-
-### **Data Management**
-- **State Management**: React hooks with TypeScript interfaces
-- **Persistence**: Browser localStorage with automatic backup/restore
-- **Session Storage**: Auto-save functionality with 24-hour retention
-- **Material Storage**: Long-term storage (30 days) for guidelines and reference materials
-
-### **Development Tools**
-- **Code Quality**: ESLint and TypeScript for static analysis
-- **Package Manager**: npm with lock file for reproducible builds
-- **Development Server**: Next.js development server with hot reload
+- **Electron** - Desktop app framework
+- **Next.js 15** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Radix UI** - Component library
+- **OpenAI API** - The AI magic
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### **Prerequisites**
-- Node.js 18+ (LTS recommended)
-- npm or yarn package manager
-- OpenAI API key
+### Quick Install
+1. Download the `.dmg` file from releases
+2. Drag to Applications folder
+3. Get an OpenAI API key and add it in Settings
 
-### **Installation**
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/translnathan.git
-   cd translnathan
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Environment setup**
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Edit `.env.local` and add your OpenAI API key:
-   ```env
-   OPENAI_API_KEY=your_api_key_here
-   OPENAI_MODEL=gpt-4-turbo-preview
-   ```
-
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open in browser**
-   Navigate to `http://localhost:3000`
-
-### **Production Deployment**
-
-**Vercel (Recommended)**
+### Development Setup
 ```bash
-npm run build
-vercel --prod
+git clone https://github.com/franz-rosenzweig/Translation-App.git
+cd Translation-App
+npm install
+
+# Add your API key to .env.local
+echo "OPENAI_API_KEY=your_key_here" > .env.local
+
+# Run the app
+npm run app-dev
+
+# Build for production
+npm run dist-mac
 ```
 
-**Manual Deployment**
-```bash
-npm run build
-npm start
-```
+**Important:** Don't commit your `.env.local` file - it has your API key in it!
 
 ---
 
-## 📖 Usage Guide
+## 📖 User Guide
+
+### **Interface Overview**
+
+#### **Collapsible Sidebar**
+- **Toggle**: Click the hamburger menu (☰) to collapse/expand
+- **Settings**: Access all translation and app settings
+- **Tools**: Sessions, guidelines, reference materials, and API settings
+- **Model Selection**: Choose between GPT models and themes
+
+#### **Main Translation Area**
+- **Source Text**: Enter Hebrew text for translation
+- **Rough English**: Optional rough translation for context
+- **Run Button**: Positioned below source text for easy access
+- **Results Tabs**: View edited text, audience version, and analysis
 
 ### **Basic Translation Workflow**
 
-1. **Input Text**: Paste Hebrew text in the source panel
-2. **Optional Rough Translation**: Add rough English for context
-3. **Configure Settings**: Adjust translation intensity sliders
-4. **Run Translation**: Click "Run" to process with AI
-5. **Review Results**: Examine edited text with readability analysis
-6. **Export or Iterate**: Save results or refine further
+1. **Setup**: Configure API key via Settings → API Key Settings
+2. **Input**: Paste Hebrew text in the source panel
+3. **Optional Context**: Add rough English translation if available
+4. **Settings**: Access Translation Settings for fine-tuning
+5. **Run**: Click Run button to process with AI
+6. **Review**: Examine results with readability analysis
+7. **Export**: Save or copy results as needed
 
 ### **Advanced Features**
 
-#### **Reference Material Setup**
-1. Click "Reference Material" button
+#### **Translation Settings (Unified Modal)**
+Access via sidebar → Translation Settings button for combined configuration:
+
+**Prompt Settings Tab:**
+- **Override Text**: Custom instructions for the AI
+- **Translation Sliders**: Americanization, structure, tone, jargon (1-10 scale)
+- **Processing Options**: Paragraph breaks, sentence length, verb complexity
+- **Banned Terms**: Configure prohibited terminology
+
+**Audience Version Tab:**
+- **Target Audience**: Specify intended readership
+- **Custom Prompt**: Additional instructions for audience adaptation
+- **Quick Presets**: General Public, Academic, Children, Business
+- **Additional Notes**: Context for audience-specific requirements
+
+#### **Reference Material Management**
+1. Click "Reference Material" in sidebar
 2. Upload PDF files or paste text samples
-3. Include 2-3 representative paragraphs
-4. Save for automatic application to future translations
-
-#### **Translation Guidelines**
-1. Access "Translation Guidelines" panel
-2. Upload Markdown or text files with style rules
-3. System automatically applies guidelines to all translations
-
-#### **Custom Prompt Engineering**
-1. Open "Prompt Drawer"
-2. Adjust intensity sliders (1=minimal, 10=maximum)
-3. Add custom override instructions
-4. Configure banned terms if needed
+3. Include 2-3 representative paragraphs per author/style
+4. Materials automatically influence translation style
 
 #### **Session Management**
-1. Use "Sessions" to save current work
-2. Create named sessions for different projects
+1. Use "Sessions" to save current translation work
+2. Name sessions for different projects or clients
 3. Switch between sessions without losing progress
+4. Auto-save prevents data loss
+
+#### **Translation Guidelines**
+1. Access via sidebar → "Translation Guidelines"
+2. Upload Markdown or text files with style rules
+3. Guidelines apply automatically to all translations
+4. Supports project-specific style guides
+
+### **Keyboard Shortcuts**
+- **Cmd/Ctrl + Enter**: Run translation
+- **Cmd/Ctrl + /**: Toggle Translation Settings modal
+- **Cmd/Ctrl + ,**: Open preferences (API settings)
 
 ---
 
 ## 🎨 Theme System
 
-TranslNathan includes professional color schemes inspired by popular development environments:
+TranslNathan features a sophisticated theming system with both light and dark modes:
 
-### **Light Themes**
-- **GitHub Light**: Clean, minimal design inspired by GitHub's interface
-- **One Light**: Warm, easy-on-the-eyes color palette
-- **Solarized Light**: Scientifically-optimized color contrast
+### **Available Themes**
+- **Light Mode**: Clean, professional interface for day use
+- **Dark Mode**: Reduced eye strain for extended sessions
 
-### **Dark Themes**
-- **Default Dark**: Modern dark theme with blue accents
-- **GitHub Dark**: GitHub's professional dark mode
-- **Solarized Dark**: High-contrast dark theme for extended use
-- **Monokai**: Classic dark theme favored by developers
+### **Theme Features**
+- **Consistent Color Palette**: Carefully chosen colors for optimal contrast
+- **Accessibility Compliant**: WCAG 2.1 AA color contrast ratios
+- **Smooth Transitions**: Animated theme switching
+- **System Integration**: Respects system dark mode preferences
 
-Access themes via the palette icon in the top navigation bar.
+Access theme settings via the sidebar → Theme selector.
 
 ---
 
 ## 🔧 Configuration
 
-### **Translation Settings**
+### **Application Settings**
+
+#### **API Configuration**
+- **OpenAI API Key**: Required for AI translation functionality
+- **Model Selection**: Choose between available GPT models
+- **Usage Monitoring**: Track API usage and costs
+
+#### **Translation Parameters**
 
 | Setting | Range | Description |
 |---------|-------|-------------|
-| **Americanization** | 1-10 | How strongly to adapt text for American English readers |
-| **Structure Strictness** | 1-10 | How closely to preserve original sentence structure |
-| **Tone Strictness** | 1-10 | How precisely to match the original author's tone |
-| **Jargon Tolerance** | 1-10 | Whether to preserve or simplify technical terminology |
+| **Americanization** | 1-10 | Adaptation strength for American English conventions |
+| **Structure Strictness** | 1-10 | Preservation vs. restructuring of original syntax |
+| **Tone Strictness** | 1-10 | Fidelity to original authorial voice |
+| **Jargon Tolerance** | 1-10 | Technical terminology preservation vs. simplification |
 
-### **Additional Options**
+#### **Processing Options**
 - **Preserve Paragraph Breaks**: Maintain original paragraph structure
-- **Prefer Shorter Sentences**: Break up complex sentences when possible
-- **Prefer Plain Verbs**: Use simple verb forms over complex constructions
+- **Shorter Sentences**: Break complex sentences for clarity
+- **Plain Verbs**: Prefer simple over complex verb constructions
 
-### **Environment Variables**
+#### **Audience Settings**
+- **Target Audience**: Specify intended readership
+- **Adaptation Level**: How extensively to modify for audience
+- **Custom Instructions**: Specific requirements for audience version
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API authentication key | Required |
-| `OPENAI_MODEL` | Model to use for translations | `gpt-4-turbo-preview` |
-| `MAX_CONTENT_LENGTH` | Maximum characters per translation | `15000` |
-| `SESSION_TIMEOUT` | Auto-save retention period | `24h` |
+### **Environment Configuration**
+
+Create `.env.local` (never commit this file!):
+
+```env
+# Required: OpenAI API Key
+OPENAI_API_KEY=your_api_key_here
+
+# Optional: Model Configuration
+OPENAI_MODEL=gpt-4-turbo-preview
+
+# Optional: Application Limits
+MAX_CONTENT_LENGTH=15000
+SESSION_TIMEOUT=24h
+```
 
 ---
 
-## 📊 Readability Analysis
+## 📊 Text Analysis & Readability
 
+### **Hemingway-Style Analysis**
 TranslNathan includes sophisticated text analysis inspired by the Hemingway Editor:
 
-### **Color-Coded Highlighting**
-- 🟡 **Hard Sentences**: Complex sentence structures
-- 🔴 **Very Hard Sentences**: Extremely difficult to read
-- 🟦 **Passive Voice**: Passive construction detection
-- 🟣 **Complex Phrases**: Overly complicated expressions
-- 🟢 **Weakeners**: Qualifying words that reduce impact
+#### **Color-Coded Highlighting**
+- 🟡 **Hard Sentences**: Complex structures that may confuse readers
+- 🔴 **Very Hard Sentences**: Extremely difficult passages requiring revision
+- 🟦 **Passive Voice**: Passive constructions that reduce impact
+- 🟣 **Complex Phrases**: Unnecessarily complicated expressions
+- 🟢 **Weakeners**: Qualifying words that diminish authority
 
-### **Metrics Provided**
-- **Grade Level**: Flesch-Kincaid reading level
-- **Word Count**: Total words in translated text
-- **Sentence Count**: Number of sentences
-- **Average Sentence Length**: Words per sentence
-- **Character Density**: Characters per word
+#### **Readability Metrics**
+- **Grade Level**: Flesch-Kincaid reading level assessment
+- **Readability Score**: Overall text accessibility rating
+- **Word/Sentence Counts**: Basic text statistics
+- **Average Sentence Length**: Complexity indicators
 
+#### **Improvement Suggestions**
+- **Sentence Simplification**: Recommendations for clearer expression
+- **Active Voice**: Suggestions for more direct communication
+- **Word Choice**: Alternative expressions for complex terms
 ---
 
 ## 🔒 Privacy & Security
 
-### **Data Handling**
-- **Local Storage**: All user data stored in browser localStorage
-- **No Server Storage**: Translation history not stored on servers
-- **API Security**: OpenAI API calls use secure HTTPS connections
-- **Session Isolation**: Each browser session is independent
+### **Data Handling & Privacy**
+- **Local Storage Only**: All user data stored locally in browser storage
+- **No Server Persistence**: Translation history never stored on remote servers
+- **API Security**: All OpenAI API calls use secure HTTPS connections
+- **Session Isolation**: Each application instance maintains independent data
 
-### **Content Privacy**
-- **Temporary Processing**: Text sent to OpenAI only during active translation
-- **No Logging**: Translation content not logged on servers
+### **Sensitive Information Protection**
+- **API Key Security**: Keys stored locally, never transmitted except to OpenAI
+- **Content Privacy**: Translation text only sent to OpenAI during active processing
+- **No Logging**: Translation content not logged or retained by application
 - **User Control**: Complete control over data retention and deletion
+
+### **Best Practices**
+- **Environment Variables**: Store API keys in `.env.local` (never commit!)
+- **Key Rotation**: Regularly rotate OpenAI API keys for security
+- **Local Backups**: Export important sessions before clearing browser data
+- **Secure Networks**: Use application only on trusted network connections
 
 ---
 
-## 🤝 Contributing
+## � Deployment & Distribution
 
-We welcome contributions to TranslNathan! Here's how to get involved:
+### **Desktop Application Build**
 
-### **Development Setup**
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Install dependencies: `npm install`
-4. Make your changes
-5. Run tests: `npm test`
-6. Commit changes: `git commit -m 'Add amazing feature'`
-7. Push to branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
+#### **macOS DMG**
+```bash
+npm run dist-mac
+```
+Creates `Translation Chat-1.0.0-arm64.dmg` in `dist/` folder
 
-### **Contribution Guidelines**
-- Follow TypeScript best practices
-- Maintain component modularity
-- Add tests for new features
-- Update documentation as needed
-- Ensure accessibility compliance
+#### **Cross-Platform Build**
+```bash
+npm run dist
+```
+Builds for current platform (Windows, macOS, Linux)
 
-### **Code Style**
-- Use TypeScript for all new code
-- Follow existing naming conventions
-- Component files should be PascalCase
-- Utility files should be camelCase
-- Include JSDoc comments for complex functions
+#### **Development Testing**
+```bash
+npm run app-dev
+```
+Runs Next.js dev server with Electron for live development
+
+### **Build Configuration**
+- **Electron Builder**: Configured for professional app packaging
+- **Code Signing**: Optional for macOS distribution (requires developer account)
+- **Auto-updater**: Ready for implementation in future versions
+- **Icon Assets**: Optimized icons for all platforms and resolutions
+
+### **System Requirements**
+- **macOS**: 10.14 Mojave or later (Apple Silicon optimized)
+- **Windows**: Windows 10 or later
+- **Linux**: Ubuntu 18.04+ or equivalent
+- **Memory**: 4GB RAM minimum, 8GB recommended
+- **Storage**: 500MB free space for installation
+
+---
+
+## � Development
+
+### **Project Structure**
+```
+Translation-App/
+├── app/                    # Next.js app directory
+│   ├── layout.tsx          # Root layout component
+│   ├── page.tsx            # Main application page
+│   └── api/               # API routes
+├── components/            # React components
+│   ├── Sidebar.tsx        # Collapsible sidebar navigation
+│   ├── TranslationSettings.tsx  # Unified settings modal
+│   ├── RunButton.tsx      # Translation execution
+│   └── ...
+├── lib/                   # Utility libraries
+│   ├── api-client.ts      # OpenAI API integration
+│   ├── storage.ts         # Local storage management
+│   └── hemingway.ts       # Text analysis algorithms
+├── assets/               # Application assets
+│   ├── icon.icns         # macOS application icon
+│   ├── icon-1024.png     # High-resolution icon
+│   └── icon.svg          # Vector source icon
+├── main.js               # Electron main process
+├── preload.js            # Electron preload script
+└── package.json          # Project configuration
+```
+
+### **Development Workflow**
+
+#### **Local Development**
+1. **Install dependencies**: `npm install`
+2. **Start dev server**: `npm run app-dev`
+3. **Make changes**: Edit files with hot reload
+4. **Test thoroughly**: Verify functionality across components
+5. **Build for testing**: `npm run dist-mac` for final testing
+
+#### **Code Quality**
+- **TypeScript**: Strict type checking enabled
+- **Component Architecture**: Modular, reusable components
+- **Error Handling**: Comprehensive error boundaries and validation
+- **Performance**: Optimized React rendering and state management
+
+#### **Testing Strategy**
+- **Manual Testing**: Comprehensive UI/UX testing across workflows
+- **Error Scenarios**: Test API failures, invalid inputs, network issues
+- **Cross-Platform**: Test builds on target operating systems
+- **Accessibility**: Verify keyboard navigation and screen reader support
+
+### **Contributing Guidelines**
+
+#### **Development Setup**
+1. Fork the repository on GitHub
+2. Clone your fork locally
+3. Create feature branch: `git checkout -b feature/amazing-feature`
+4. Install dependencies: `npm install`
+5. Set up environment: Copy `.env.example` to `.env.local`
+
+#### **Making Changes**
+- Follow existing TypeScript conventions
+- Maintain component modularity and reusability
+- Add proper error handling and validation
+- Update documentation for new features
+- Test thoroughly before submitting
+
+#### **Submission Process**
+1. Commit changes: `git commit -m 'Add amazing feature'`
+2. Push to branch: `git push origin feature/amazing-feature`
+3. Open Pull Request with detailed description
+4. Address code review feedback
+5. Ensure CI passes (when implemented)
 
 ---
 
@@ -278,55 +391,61 @@ We welcome contributions to TranslNathan! Here's how to get involved:
 
 #### **API Key Problems**
 ```
-Error: Invalid API key
+Error: Invalid API key or quota exceeded
 ```
-**Solution**: Verify your OpenAI API key in `.env.local`
+**Solutions:**
+- Verify API key in Settings → API Key Settings
+- Check OpenAI account billing and quota
+- Ensure key has proper permissions for GPT models
 
-#### **Translation Timeout**
+#### **Application Won't Start**
+**Symptoms:** Electron app fails to launch or shows blank screen
+**Solutions:**
+- Clear application data: `~/Library/Application Support/Translation Chat`
+- Restart application completely
+- Check for macOS security restrictions (right-click → Open)
+
+#### **Translation Fails**
 ```
-Error: Request timeout
+Error: Request timeout or network error
 ```
-**Solution**: Try shorter text or check internet connection
+**Solutions:**
+- Check internet connection
+- Reduce text length (max 15,000 characters)
+- Verify OpenAI service status
+- Try different GPT model in settings
 
-#### **Theme Not Loading**
-**Solution**: Clear browser cache and reload page
+#### **Settings Not Saving**
+**Symptoms:** Configuration resets after restart
+**Solutions:**
+- Check browser localStorage is enabled
+- Verify application has proper permissions
+- Clear and reconfigure settings
+- Restart application after major changes
 
-#### **Session Not Saving**
-**Solution**: Ensure localStorage is enabled in browser settings
+#### **Performance Issues**
+**Symptoms:** Slow response or high CPU usage
+**Solutions:**
+- Close other resource-intensive applications
+- Reduce text length for processing
+- Clear old sessions from storage
+- Restart application periodically
 
-### **Performance Tips**
-- Keep translations under 15,000 characters
-- Use reference material under 3,000 characters
-- Clear old sessions periodically
-- Close unused browser tabs to free memory
+### **Advanced Troubleshooting**
 
----
+#### **Debug Mode**
+For development builds, use browser developer tools:
+1. **Open DevTools**: Cmd+Option+I (macOS) or F12 (Windows/Linux)
+2. **Check Console**: Look for JavaScript errors
+3. **Network Tab**: Verify API calls are successful
+4. **Application Tab**: Inspect localStorage data
 
-## 📜 License
+#### **Log Files**
+Application logs available in:
+- **macOS**: `~/Library/Logs/Translation Chat/`
+- **Windows**: `%USERPROFILE%\AppData\Roaming\Translation Chat\logs\`
+- **Linux**: `~/.config/Translation Chat/logs/`
 
-MIT License - see [LICENSE.md](LICENSE.md) for details.
+## License
 
----
-
-## 🙏 Acknowledgments
-
-- **OpenAI** for providing the GPT models that power translation
-- **Radix UI** for accessible component primitives
-- **Tailwind CSS** for utility-first styling
-- **Hemingway Editor** for readability analysis inspiration
-- **The translation community** for feedback and feature requests
-
----
-
-## 📞 Support
-
-- **Documentation**: Full docs available at [docs.translnathan.com](https://docs.translnathan.com)
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/translnathan/issues)
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/yourusername/translnathan/discussions)
-- **Email**: Contact us at support@translnathan.com
-
----
-
-**Built with ❤️ for professional translators and content creators**
-
-*TranslNathan - Where AI meets professional translation standards*
+MIT License - see [LICENSE.md](LICENSE.md) for details. Use it however you want, just don't blame me if something breaks.
