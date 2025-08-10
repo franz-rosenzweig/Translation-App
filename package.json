@@ -1,7 +1,7 @@
 {
   "name": "translnathan",
-  "version": "1.0.0",
-  "description": "Professional Hebrew-English AI Translation Editor with Style Awareness",
+  "version": "0.0.1",
+  "description": "Hebrew-English AI Translation Desktop App",
   "private": true,
   "type": "module",
   "main": "main.js",
