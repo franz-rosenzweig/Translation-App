@@ -9,14 +9,14 @@ interface HighlightedTextProps {
   showTooltips?: boolean;
 }
 
-// Color scheme matching Hemingway app
+// Color scheme matching Hemingway app - more vibrant and accessible
 const highlightColors = {
-  veryHardSentence: 'bg-red-200/60 hover:bg-red-200/80', // Red for very hard sentences
-  hardSentence: 'bg-yellow-200/60 hover:bg-yellow-200/80', // Yellow for hard sentences
-  weakener: 'bg-blue-200/60 hover:bg-blue-200/80', // Blue for weakeners
-  complex: 'bg-purple-200/60 hover:bg-purple-200/80', // Purple for complex words
-  passive: 'bg-green-200/60 hover:bg-green-200/80', // Green for passive voice
-  adverb: 'bg-blue-200/60 hover:bg-blue-200/80' // Blue for legacy adverbs
+  veryHardSentence: 'bg-red-400/30 hover:bg-red-400/40 dark:bg-red-400/20 dark:hover:bg-red-400/30', // Red for very hard sentences
+  hardSentence: 'bg-yellow-400/30 hover:bg-yellow-400/40 dark:bg-yellow-400/20 dark:hover:bg-yellow-400/30', // Yellow for hard sentences
+  weakener: 'bg-blue-400/30 hover:bg-blue-400/40 dark:bg-blue-400/20 dark:hover:bg-blue-400/30', // Blue for weakeners
+  complex: 'bg-purple-400/30 hover:bg-purple-400/40 dark:bg-purple-400/20 dark:hover:bg-purple-400/30', // Purple for complex words
+  passive: 'bg-green-400/30 hover:bg-green-400/40 dark:bg-green-400/20 dark:hover:bg-green-400/30', // Green for passive voice
+  adverb: 'bg-blue-400/30 hover:bg-blue-400/40 dark:bg-blue-400/20 dark:hover:bg-blue-400/30' // Blue for legacy adverbs
 };
 
 interface TextSegment {

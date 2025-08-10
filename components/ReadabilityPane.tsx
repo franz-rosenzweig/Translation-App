@@ -71,18 +71,18 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
           <h3 className="text-sm font-medium">Text Analysis</h3>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="text-xs px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+            className="text-xs px-3 py-1 rounded bg-accent/20 hover:bg-accent/30 border border-default transition-colors"
           >
             {isEditing ? 'View Highlights' : 'Edit Text'}
           </button>
         </div>
         
-        <div className="bg-white dark:bg-gray-900 border rounded-lg max-h-96 overflow-y-auto">
+        <div className="bg-panel border border-default rounded-lg max-h-96 overflow-y-auto">
           {isEditing ? (
             <textarea
               value={editableText}
               onChange={(e) => handleTextChange(e.target.value)}
-              className="w-full h-full p-4 bg-transparent border-none resize-none focus:outline-none min-h-[300px]"
+              className="w-full h-full p-4 bg-transparent border-none resize-none focus:outline-none min-h-[300px] text-foreground"
               placeholder="Edit your text here to see live readability analysis..."
             />
           ) : (
@@ -142,13 +142,13 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
           <div className="flex gap-2">
             <button
               onClick={() => toggleAll(true)}
-              className="text-xs px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600"
+              className="text-xs px-2 py-1 rounded bg-accent/20 hover:bg-accent/30 border border-default transition-colors"
             >
               Show all
             </button>
             <button
               onClick={() => toggleAll(false)}
-              className="text-xs px-2 py-1 rounded bg-neutral-700 hover:bg-neutral-600"
+              className="text-xs px-2 py-1 rounded bg-accent/20 hover:bg-accent/30 border border-default transition-colors"
             >
               Hide all
             </button>
@@ -165,7 +165,7 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
                 onChange={() => handleToggle('veryHardSentence')}
                 className="rounded"
               />
-              <div className="w-3 h-3 bg-red-200 rounded"></div>
+              <div className="w-3 h-3 bg-red-400 rounded"></div>
               <span className="text-sm">Very hard sentences</span>
             </div>
             <span className="text-sm font-medium">{counts.veryHardSentences}</span>
@@ -180,7 +180,7 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
                 onChange={() => handleToggle('hardSentence')}
                 className="rounded"
               />
-              <div className="w-3 h-3 bg-yellow-200 rounded"></div>
+              <div className="w-3 h-3 bg-yellow-400 rounded"></div>
               <span className="text-sm">Hard sentences</span>
             </div>
             <span className="text-sm font-medium">{counts.hardSentences}</span>
@@ -195,7 +195,7 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
                 onChange={() => handleToggle('weakener')}
                 className="rounded"
               />
-              <div className="w-3 h-3 bg-blue-200 rounded"></div>
+              <div className="w-3 h-3 bg-blue-400 rounded"></div>
               <span className="text-sm">Weakeners</span>
             </div>
             <span className="text-sm font-medium">{counts.weakeners}</span>
@@ -210,7 +210,7 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
                 onChange={() => handleToggle('complex')}
                 className="rounded"
               />
-              <div className="w-3 h-3 bg-purple-200 rounded"></div>
+              <div className="w-3 h-3 bg-purple-400 rounded"></div>
               <span className="text-sm">Complex words</span>
             </div>
             <span className="text-sm font-medium">{counts.complexWords}</span>
@@ -225,7 +225,7 @@ export default function ReadabilityPane({ text, onHighlightToggle, onTextChange 
                 onChange={() => handleToggle('passive')}
                 className="rounded"
               />
-              <div className="w-3 h-3 bg-green-200 rounded"></div>
+              <div className="w-3 h-3 bg-green-400 rounded"></div>
               <span className="text-sm">Passive voice</span>
             </div>
             <span className="text-sm font-medium">{counts.passiveVoice}</span>
