@@ -39,6 +39,19 @@ export default function DocumentWorkspace() {
   const [pendingChanges, setPendingChanges] = useState<any[]>([]);
   const autosaveTimer = useRef<any>(null);
 
+  // Load tracked changes from backend if version exists (DB mode)
+  async function loadTrackedChanges() {
+    if(!doc?.currentAdaptedVersionId) return;
+    try {
+      const res = await fetch(`/api/document/${doc.id}/versions/${doc.currentAdaptedVersionId}/changes`);
+      if(res.ok) {
+        const json = await res.json();
+        setPendingChanges(json.changes || []);
+      }
+    } catch(e) { /* ignore */ }
+  }
+
+  useEffect(()=> { loadTrackedChanges(); }, [doc?.currentAdaptedVersionId]);
   // --- Track changes helpers ---
   const applyChange = useCallback((chg:any) => {
     // Apply change to adaptedDraft by replacing range [start,end) with after
@@ -51,16 +64,17 @@ export default function DocumentWorkspace() {
     });
   }, []);
 
-  const acceptChange = useCallback((id:string) => {
-    setPendingChanges(list => list.map(c => c.id === id ? { ...c, status: 'accepted' } : c));
+  const rejectChange = useCallback(async (id:string) => {
+    setPendingChanges(list => list.map(c => c.id === id ? { ...c, status: 'rejected' } : c));
+    fetch(`/api/changes/${id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'reject' }) }).catch(()=>{});
+  }, []);
+
+  const acceptChange = useCallback(async (id:string) => {
     const chg = pendingChanges.find(c => c.id === id);
     if(chg) applyChange(chg);
+    setPendingChanges(list => list.map(c => c.id === id ? { ...c, status: 'accepted' } : c));
+    fetch(`/api/changes/${id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'accept' }) }).catch(()=>{});
   }, [pendingChanges, applyChange]);
-
-  const rejectChange = useCallback((id:string) => {
-    setPendingChanges(list => list.map(c => c.id === id ? { ...c, status: 'rejected' } : c));
-    // No content modification on reject (we assume adaptedDraft already reflects original until accepted)
-  }, []);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/document/${id}`);
