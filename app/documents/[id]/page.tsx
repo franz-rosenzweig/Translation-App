@@ -13,9 +13,13 @@ export default function DocumentWorkspace() {
   const id = params?.id as string;
   const [doc, setDoc] = useState<Doc | null>(null);
   const [adaptedDraft, setAdaptedDraft] = useState('');
-  const [mode, setMode] = useState<'edit'|'diff'>('edit');
+  const [mode, setMode] = useState<'edit'|'diff'|'align'>('edit');
   const [saving, setSaving] = useState(false);
   const [generatingDirect, setGeneratingDirect] = useState(false);
+  const [adapting, setAdapting] = useState(false);
+  const [alignment, setAlignment] = useState<any[]>([]);
+  const [loadingAlignment, setLoadingAlignment] = useState(false);
+  const [audience, setAudience] = useState('General');
   const [rtlOverride, setRtlOverride] = useState<'auto'|'rtl'|'ltr'>('auto');
 
   const load = useCallback(async () => {
@@ -47,9 +51,7 @@ export default function DocumentWorkspace() {
     if(!doc) return;
     // Placeholder: In real implementation call translation pipeline
     setGeneratingDirect(true);
-    // Fake direct translation by echo or simple transform
-    const fake = doc.sourceText.split('\n').map(l=> `[DIRECT] ${l}`).join('\n');
-    const res = await fetch(`/api/document/${doc.id}`, { method: 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ directTranslation: fake }) });
+    const res = await fetch(`/api/document/${doc.id}/translate`, { method: 'POST' });
     const data = await res.json();
     setGeneratingDirect(false);
     if(data.document){
@@ -58,10 +60,36 @@ export default function DocumentWorkspace() {
     }
   }
 
+  async function adapt() {
+    if(!doc) return;
+    setAdapting(true);
+    const res = await fetch(`/api/document/${doc.id}/adapt`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ audience }) });
+    const data = await res.json();
+    setAdapting(false);
+    if(data.adaptedText) {
+      setDoc(d => d ? { ...d, adaptedText: data.adaptedText } : d);
+      setAdaptedDraft(data.adaptedText);
+    }
+  }
+
+  async function loadAlignment() {
+    if(!doc?.directTranslation) return;
+    setLoadingAlignment(true);
+    const res = await fetch(`/api/document/${doc.id}/alignment`);
+    const data = await res.json();
+    setLoadingAlignment(false);
+    setAlignment(data.alignment || []);
+  }
+
   const diffOps = useMemo(()=>{
     if(mode !== 'diff' || !doc?.directTranslation) return [];
     return diffWords(doc.directTranslation, adaptedDraft);
   }, [mode, doc?.directTranslation, adaptedDraft]);
+
+  useEffect(()=> {
+    if(mode === 'align') loadAlignment();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   function renderDiff() {
     return (
@@ -82,9 +110,14 @@ export default function DocumentWorkspace() {
     <div className="flex flex-col h-[calc(100vh-2rem)] p-4 gap-4">
       <div className="flex items-center gap-4 border-b border-default pb-2">
         <h1 className="text-lg font-semibold flex-1 truncate">{doc.title || 'Untitled'}</h1>
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
           <label className="flex items-center gap-1"><input type="radio" name="mode" value="edit" checked={mode==='edit'} onChange={()=>setMode('edit')} /> Edit</label>
           <label className="flex items-center gap-1"><input type="radio" name="mode" value="diff" checked={mode==='diff'} onChange={()=>setMode('diff')} /> Diff</label>
+          <label className="flex items-center gap-1"><input type="radio" name="mode" value="align" checked={mode==='align'} onChange={()=>setMode('align')} /> Align</label>
+          <div className="flex items-center gap-1">
+            <input className="border rounded px-1 py-0.5 w-32" placeholder="Audience" value={audience} onChange={e=>setAudience(e.target.value)} />
+            <button onClick={adapt} disabled={adapting || !doc.directTranslation} className="px-2 py-1 rounded bg-purple-600 text-white disabled:opacity-50">{adapting? 'Adapting…':'Adapt'}</button>
+          </div>
           <select className="border rounded px-1 py-0.5 bg-panel" value={rtlOverride} onChange={e=>setRtlOverride(e.target.value as any)}>
             <option value="auto">Dir: Auto</option>
             <option value="ltr">Dir: LTR</option>
@@ -104,6 +137,18 @@ export default function DocumentWorkspace() {
           {mode === 'diff' && doc.directTranslation ? (
             <div dir={direction} className="p-3 overflow-auto" style={{ direction }}>
               {renderDiff()}
+            </div>
+          ) : mode === 'align' ? (
+            <div className="p-3 overflow-auto text-xs space-y-1">
+              {loadingAlignment && <div>Loading alignment…</div>}
+              {!loadingAlignment && alignment.map(pair => (
+                <div key={pair.sourceIndex} className="border rounded p-2">
+                  <div className="font-medium opacity-70">#{pair.sourceIndex+1} similarity {(pair.similarity*100).toFixed(0)}%</div>
+                  <div className="mt-1 text-[11px] opacity-80">{pair.source}</div>
+                  <div className="mt-1 text-[11px]">{pair.target}</div>
+                </div>
+              ))}
+              {!loadingAlignment && alignment.length === 0 && <div className="text-muted">No alignment available</div>}
             </div>
           ) : (
             <textarea dir={direction} className="flex-1 p-3 outline-none bg-transparent resize-none text-sm leading-relaxed" style={{ direction }} value={adaptedDraft} onChange={e=>setAdaptedDraft(e.target.value)} />
