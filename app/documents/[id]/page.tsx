@@ -84,7 +84,10 @@ export default function DocumentWorkspace() {
     if(!doc) return;
     if(autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(()=> {
-      if(adaptedDraft && adaptedDraft !== doc.adaptedText) save(false);
+      if(adaptedDraft && adaptedDraft !== doc.adaptedText) {
+        const delta = Math.abs((adaptedDraft||'').length - (doc.adaptedText||'').length);
+        if(delta >= 10) save(false);
+      }
     }, 2000);
     return () => { if(autosaveTimer.current) clearTimeout(autosaveTimer.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,6 +115,32 @@ export default function DocumentWorkspace() {
     if(data.adaptedText) {
       setDoc(d => d ? { ...d, adaptedText: data.adaptedText } : d);
       setAdaptedDraft(data.adaptedText);
+      fetchVersions();
+    }
+  }
+
+  async function rephrase() {
+    if(!doc) return;
+    setAdapting(true);
+    const res = await fetch(`/api/document/${doc.id}/rephrase`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ audience, sourceLanguage: doc.sourceLanguage, targetLanguage: doc.targetLanguage }) });
+    const data = await res.json();
+    setAdapting(false);
+    if(data.adaptedText) {
+      setDoc(d => d ? { ...d, adaptedText: data.adaptedText } : d);
+      setAdaptedDraft(data.adaptedText);
+      fetchVersions();
+    }
+  }
+
+  async function restoreVersion(vid: string) {
+    if(!doc) return;
+    setSaving(true);
+    const res = await fetch(`/api/document/${doc.id}/versions/${vid}/restore`, { method: 'POST' });
+    const data = await res.json();
+    setSaving(false);
+    if(data.version) {
+      setDoc(d => d ? { ...d, adaptedText: data.version.content, currentAdaptedVersionId: data.version.id } : d);
+      setAdaptedDraft(data.version.content);
       fetchVersions();
     }
   }
@@ -175,6 +204,7 @@ export default function DocumentWorkspace() {
           <div className="flex items-center gap-1">
             <input className="border rounded px-1 py-0.5 w-32" placeholder="Audience" value={audience} onChange={e=>setAudience(e.target.value)} />
             <button onClick={adapt} disabled={adapting || !doc.directTranslation} className="px-2 py-1 rounded bg-purple-600 text-white disabled:opacity-50">{adapting? 'Adapting…':'Adapt'}</button>
+            <button onClick={rephrase} disabled={adapting || !doc.directTranslation} className="px-2 py-1 rounded bg-pink-600 text-white disabled:opacity-50">{adapting? '…':'Rephrase'}</button>
           </div>
           <select className="border rounded px-1 py-0.5 bg-panel" value={rtlOverride} onChange={e=>setRtlOverride(e.target.value as any)}>
             <option value="auto">Dir: Auto</option>
@@ -193,12 +223,20 @@ export default function DocumentWorkspace() {
                 <button className="text-[10px] underline" onClick={()=>fetchVersions()}>Refresh</button>
               </div>
               <div className="flex-1 overflow-auto text-[11px] divide-y divide-default/40">
-                {versions.slice().reverse().map(v => (
-                  <button key={v.id} className={`w-full text-left px-2 py-1 hover:bg-muted/40 ${selectedDiffBase===v.id ? 'bg-accent/30' : ''}`} onClick={()=> setSelectedDiffBase(v.id)}>
-                    <div className="font-medium">{v.type}</div>
-                    <div className="opacity-70 truncate">{new Date(v.createdAt).toLocaleTimeString()}</div>
-                  </button>
-                ))}
+                {versions.slice().reverse().map(v => {
+                  const snippet = (v.content || '').replace(/<[^>]+>/g,'').slice(0,60);
+                  const isBase = selectedDiffBase===v.id;
+                  return (
+                    <div key={v.id} className={`px-2 py-1 space-y-0.5 ${isBase? 'bg-accent/30' : 'hover:bg-muted/40'}`}> 
+                      <div className="flex items-center justify-between">
+                        <button className="font-medium mr-2" onClick={()=> setSelectedDiffBase(v.id)}>{v.type}</button>
+                        {v.type==='adapted' && <button className="text-[10px] underline" onClick={()=>restoreVersion(v.id)}>Restore</button>}
+                      </div>
+                      <div className="opacity-70 truncate">{new Date(v.createdAt).toLocaleTimeString()}</div>
+                      <div className="text-[10px] opacity-80 truncate">{snippet}</div>
+                    </div>
+                  );
+                })}
                 {versions.length===0 && <div className="p-2 text-muted">No versions.</div>}
               </div>
               <div className="p-2 border-t border-default">
