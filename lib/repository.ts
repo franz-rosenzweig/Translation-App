@@ -73,5 +73,8 @@ export const repo = {
   },
   listGlossary(documentId: string) {
     return prisma.glossaryTerm.findMany({ where: { documentId }, orderBy: { hebrew: 'asc' } });
+  },
+  getVersion(id: string) {
+    return prisma.version.findUnique({ where: { id } });
   }
 };
