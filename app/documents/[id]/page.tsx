@@ -39,6 +39,29 @@ export default function DocumentWorkspace() {
   const [pendingChanges, setPendingChanges] = useState<any[]>([]);
   const autosaveTimer = useRef<any>(null);
 
+  // --- Track changes helpers ---
+  const applyChange = useCallback((chg:any) => {
+    // Apply change to adaptedDraft by replacing range [start,end) with after
+    setAdaptedDraft(prev => {
+      if(prev == null) return prev as any;
+      // Basic safety: ensure indices
+      const start = Math.max(0, chg.start || 0);
+      const end = Math.min(prev.length, chg.end || chg.start || 0);
+      return prev.slice(0,start) + (chg.after || '') + prev.slice(end);
+    });
+  }, []);
+
+  const acceptChange = useCallback((id:string) => {
+    setPendingChanges(list => list.map(c => c.id === id ? { ...c, status: 'accepted' } : c));
+    const chg = pendingChanges.find(c => c.id === id);
+    if(chg) applyChange(chg);
+  }, [pendingChanges, applyChange]);
+
+  const rejectChange = useCallback((id:string) => {
+    setPendingChanges(list => list.map(c => c.id === id ? { ...c, status: 'rejected' } : c));
+    // No content modification on reject (we assume adaptedDraft already reflects original until accepted)
+  }, []);
+
   const load = useCallback(async () => {
     const res = await fetch(`/api/document/${id}`);
     const data = await res.json();
@@ -120,6 +143,11 @@ export default function DocumentWorkspace() {
       setDoc(d => d ? { ...d, adaptedText: data.adaptedText } : d);
       setAdaptedDraft(data.adaptedText);
       fetchVersions();
+      if(minimalMode && data.change_log) {
+        // Map to pending changes list (filter trivial inserts like whitespace)
+        const pcs = (data.change_log as any[]).filter(c => (c.after||c.before||'').trim()).map((c,i)=> ({ id: c.id || `chg-${Date.now()}-${i}`, ...c, status: 'pending' }));
+        setPendingChanges(pcs);
+      }
     }
   }
 
@@ -133,6 +161,10 @@ export default function DocumentWorkspace() {
       setDoc(d => d ? { ...d, adaptedText: data.adaptedText } : d);
       setAdaptedDraft(data.adaptedText);
       fetchVersions();
+      if(minimalMode && data.change_log) {
+        const pcs = (data.change_log as any[]).filter(c => (c.after||c.before||'').trim()).map((c,i)=> ({ id: c.id || `chg-${Date.now()}-${i}`, ...c, status: 'pending' }));
+        setPendingChanges(pcs);
+      }
     }
   }
 
@@ -296,14 +328,29 @@ export default function DocumentWorkspace() {
                 <div className="mt-2 border-t pt-2 space-y-1 text-[11px]">
                   <div className="font-semibold flex items-center justify-between">Pending Changes <span>{pendingChanges.length}</span></div>
                   {pendingChanges.map(ch => (
-                    <div key={ch.id} className="border rounded p-1 flex flex-col gap-1">
-                      <div className="flex gap-2 text-[10px]"><span className="uppercase font-medium">{ch.type}</span><span>{ch.before?.slice(0,30)}</span> → <span>{ch.after?.slice(0,30)}</span></div>
+                    <div key={ch.id} className={`border rounded p-1 flex flex-col gap-1 ${ch.status==='accepted'?'bg-green-500/10': ch.status==='rejected'?'bg-red-500/10':''}`}>
+                      <div className="flex gap-2 text-[10px] items-center">
+                        <span className="uppercase font-medium">{ch.type}</span>
+                        <span className="line-through opacity-70 max-w-[120px] truncate">{ch.before?.slice(0,60)}</span>
+                        <span className="opacity-50">→</span>
+                        <span className="text-green-700 dark:text-green-300 max-w-[120px] truncate">{ch.after?.slice(0,60)}</span>
+                        <span className="ml-auto text-[9px] italic opacity-60">{ch.status}</span>
+                      </div>
                       <div className="flex gap-2">
-                        <button className="px-2 py-0.5 border rounded" onClick={()=>{/* accept placeholder */}}>Accept</button>
-                        <button className="px-2 py-0.5 border rounded" onClick={()=>{/* reject placeholder */}}>Reject</button>
+                        <button className="px-2 py-0.5 border rounded disabled:opacity-40" disabled={ch.status!=='pending'} onClick={()=>acceptChange(ch.id)}>Accept</button>
+                        <button className="px-2 py-0.5 border rounded disabled:opacity-40" disabled={ch.status!=='pending'} onClick={()=>rejectChange(ch.id)}>Reject</button>
                       </div>
                     </div>
                   ))}
+                  {pendingChanges.every(c => c.status!=='pending') && (
+                    <div className="pt-1">
+                      <button
+                        className="w-full px-2 py-1 rounded bg-blue-600 text-white disabled:opacity-50"
+                        disabled={saving}
+                        onClick={()=> save(true)}
+                      >Commit Accepted Changes</button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
