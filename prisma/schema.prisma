@@ -1,0 +1,60 @@
+// Prisma schema for document-centric translation
+
+ datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Document {
+  id                      String   @id @default(cuid())
+  title                   String   @default("")
+  sourceLanguage          String
+  targetLanguage          String
+  sourceText              String
+  directTranslationVersionId String? @unique
+  currentAdaptedVersionId String? @unique
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  versions                Version[]
+}
+
+model Version {
+  id            String   @id @default(cuid())
+  document      Document @relation(fields: [documentId], references: [id])
+  documentId    String
+  type          VersionType
+  content       String
+  parentVersionId String?
+  createdAt     DateTime @default(now())
+  meta          Json?
+}
+
+enum VersionType {
+  source
+  direct
+  adapted
+}
+
+model DiffCache {
+  id            String   @id @default(cuid())
+  documentId    String
+  fromVersionId String
+  toVersionId   String
+  diffJson      Json
+  hash          String   @unique
+  createdAt     DateTime @default(now())
+}
+
+model SentenceAlignment {
+  id                   String   @id @default(cuid())
+  documentId           String
+  sourceSentenceIndex  Int
+  targetSentenceIndex  Int
+  similarity           Float
+  alignmentVersionId   String
+  createdAt            DateTime @default(now())
+}
