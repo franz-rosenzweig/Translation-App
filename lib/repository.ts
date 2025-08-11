@@ -1,4 +1,4 @@
-import { PrismaClient, VersionType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { diff_match_patch } from 'diff-match-patch';
 import crypto from 'crypto';
 
@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const repo = {
   async createDocument(input: { title?: string; sourceLanguage: string; targetLanguage: string; sourceText: string; }) {
-    return prisma.$transaction(async tx => {
+    return prisma.$transaction(async (tx: PrismaClient) => {
       const doc = await tx.document.create({
         data: {
           title: input.title || '',
@@ -29,7 +29,7 @@ export const repo = {
   getVersions(documentId: string) {
     return prisma.version.findMany({ where: { documentId }, orderBy: { createdAt: 'asc' } });
   },
-  async createVersion(documentId: string, type: VersionType, content: string, parentVersionId?: string, meta?: any) {
+  async createVersion(documentId: string, type: 'source'|'direct'|'adapted', content: string, parentVersionId?: string, meta?: any) {
     const v = await prisma.version.create({ data: { documentId, type, content, parentVersionId, meta } });
     const update: any = { updatedAt: new Date() };
     if (type === 'direct') update.directTranslationVersionId = v.id;
@@ -50,5 +50,28 @@ export const repo = {
     const ops = diffs.map(([op, text]) => ({ type: op === 0 ? 'equal' : op === -1 ? 'delete' : 'insert', text }));
     await prisma.diffCache.create({ data: { documentId: from.documentId, fromVersionId: from.id, toVersionId: to.id, diffJson: ops, hash } });
     return ops;
+  },
+  // Tracked changes
+  listTrackedChanges(versionId: string) {
+    return prisma.trackedChange.findMany({ where: { versionId }, orderBy: { createdAt: 'asc' } });
+  },
+  createTrackedChange(input: { versionId: string; changeType: string; start: number; end: number; before?: string; after?: string; }) {
+    return prisma.trackedChange.create({ data: { ...input } });
+  },
+  updateTrackedChangeStatus(id: string, status: string) {
+    return prisma.trackedChange.update({ where: { id }, data: { status } });
+  },
+  // Glossary
+  upsertGlossary(documentId: string, terms: Array<{ hebrew: string; chosenEnglish: string; note?: string }>) {
+    return prisma.$transaction(async (tx: PrismaClient) => {
+      await tx.glossaryTerm.deleteMany({ where: { documentId } });
+      if(terms.length) {
+        await tx.glossaryTerm.createMany({ data: terms.map(t => ({ documentId, hebrew: t.hebrew, chosenEnglish: t.chosenEnglish, note: t.note })) });
+      }
+      return tx.glossaryTerm.findMany({ where: { documentId } });
+    });
+  },
+  listGlossary(documentId: string) {
+    return prisma.glossaryTerm.findMany({ where: { documentId }, orderBy: { hebrew: 'asc' } });
   }
 };

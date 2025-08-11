@@ -20,6 +20,7 @@ model Document {
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   versions                Version[]
+  glossaryTerms           GlossaryTerm[]
 }
 
 model Version {
@@ -31,6 +32,7 @@ model Version {
   parentVersionId String?
   createdAt     DateTime @default(now())
   meta          Json?
+  trackedChanges TrackedChange[]
 }
 
 enum VersionType {
@@ -57,4 +59,29 @@ model SentenceAlignment {
   similarity           Float
   alignmentVersionId   String
   createdAt            DateTime @default(now())
+}
+
+// Tracked changes for adapted versions (Phase 3)
+model TrackedChange {
+  id         String   @id @default(cuid())
+  versionId  String
+  version    Version  @relation(fields: [versionId], references: [id])
+  changeType String   // insert | delete (minimal enumeration for now)
+  start      Int
+  end        Int
+  before     String?
+  after      String?
+  status     String   @default("pending") // pending | accepted | rejected
+  createdAt  DateTime @default(now())
+}
+
+// Glossary terms scoped per document (Phase 4)
+model GlossaryTerm {
+  id            String   @id @default(cuid())
+  documentId    String
+  document      Document @relation(fields: [documentId], references: [id])
+  hebrew        String
+  chosenEnglish String
+  note          String?
+  createdAt     DateTime @default(now())
 }
