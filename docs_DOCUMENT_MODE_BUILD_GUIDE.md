@@ -599,33 +599,38 @@ diffOps.forEach(op => {
 ## 30. Quick Start Checklist
 
 Phase 1
-[ ] DB migrations (documents, versions)
-[ ] Basic create document API
-[ ] Translation integration (direct)
-[ ] Adaptation endpoint (LLM)
-[ ] Diff endpoint (direct vs adapted)
-[ ] React workspace with TipTap + diff toggle
+[x] DB migrations (documents, versions)
+[x] Basic create document API
+[x] Translation integration (direct)
+[x] Adaptation endpoint (LLM)
+[x] Diff endpoint (direct vs adapted)
+[x] React workspace with TipTap + diff toggle
 
 Phase 2
-[ ] Sentence segmentation & alignment
-[ ] Embedding microservice
-[ ] Alignment UI panel
-[ ] Rephrase with audience form
-[ ] Revision history view
+[x] Sentence segmentation & alignment (heuristic splitter + alignment route)
+[ ] Embedding microservice (stub only – not deployed)
+[x] Alignment UI panel
+[x] Rephrase with audience form
+[x] Revision history view
 
 Phase 3
 [ ] Yjs realtime server
 [ ] Integrate Yjs into editor
-[ ] (Optional) Track changes extension
+[x] (Optional) Track changes extension (implemented with persistence & inline decorations)
 
 Phase 4
-[ ] Glossary CRUD
-[ ] Glossary enforcement + warnings panel
-[ ] Export DOCX/PDF
+[x] Glossary CRUD (list + replace endpoints)
+[ ] Glossary enforcement + warnings panel (backend check endpoint present; UI pending)
+[ ] Export DOCX/PDF (DOCX implemented; PDF pending)
 
 Phase 5
 [ ] Analytics dashboard
 [ ] Advanced QA (NER, entity consistency)
+
+Progress Notes:
+- Completed Phases 1 & 2 (except embedding microservice). 
+- Phase 3 track changes delivered (without realtime Yjs). 
+- Phase 4 partially underway: glossary endpoints + check + DOCX export done; UI warnings panel and PDF export outstanding.
 
 ---
 
