@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listDocuments, createDocument } from '@/lib/documentStore';
 import { repo } from '@/lib/repository';
 
+export const dynamic = 'force-dynamic';
+
 const useDb = process.env.FEATURE_DB === '1';
 
 export async function GET() {

@@ -15,7 +15,9 @@
     "build-electron": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
     "dist-mac": "npm run build && electron-builder --mac --publish=never",
-    "pack": "npm run build && electron-builder --dir"
+    "pack": "npm run build && electron-builder --dir",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
@@ -34,6 +36,7 @@
     "next": "^15.4.6",
     "openai": "^5.12.1",
     "papaparse": "^5.5.3",
+    "pdf-lib": "^1.17.1",
     "prisma": "^6.13.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -42,7 +45,7 @@
   },
   "devDependencies": {
     "@types/electron": "^1.4.38",
-    "@types/node": "^24.2.0",
+    "@types/node": "^24.2.1",
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
@@ -50,10 +53,12 @@
     "concurrently": "^9.2.0",
     "electron": "^37.2.6",
     "electron-builder": "^26.0.12",
+    "jsdom": "^26.1.0",
     "png2icons": "^2.0.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.2",
+    "vitest": "^1.6.1",
     "wait-on": "^8.0.4"
   },
   "build": {

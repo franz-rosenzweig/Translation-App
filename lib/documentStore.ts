@@ -104,11 +104,25 @@ export function getVersion(versionId: string) {
 }
 
 // --- Sentence Splitting (very naive initial) ---
+// Improved splitter: keeps punctuation, avoids splitting on common abbreviations, preserves original if degenerate.
+const ABBREV = /\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|vs|etc|e\.g|i\.e)\.$/i;
 export function splitSentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?])\s+/)
-    .map(s => s.trim())
-    .filter(Boolean);
+  if(!text) return [];
+  const raw = text.split(/(?<=[.!?])\s+/g);
+  const merged: string[] = [];
+  for(let i=0;i<raw.length;i++) {
+    let seg = raw[i];
+    if(!seg) continue;
+    // If segment ends with abbreviation, merge with next
+    if(ABBREV.test(seg.trim()) && i < raw.length-1) {
+      raw[i+1] = seg + ' ' + raw[i+1];
+      continue;
+    }
+    merged.push(seg.trim());
+  }
+  // Fallback: if splitter produced suspiciously few segments relative to punctuation density, return single chunk
+  if(merged.length <= 1 && /[.!?]/.test(text)) return [text.trim()];
+  return merged.filter(Boolean);
 }
 
 // --- Alignment (placeholder 1:1) ---

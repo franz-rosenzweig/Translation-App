@@ -11,14 +11,16 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const TIMEOUT = 60000; // 60 seconds
+// Allow longer operations (large texts) and allow env override
+const TIMEOUT = Number(process.env.OPENAI_TIMEOUT_MS) || 240000; // default 240s
 const MAX_RETRIES = 1;
 const RETRY_DELAY = 1000; // 1 second
 
-async function callOpenAI(messages: any[], signal: AbortSignal, retryCount = 0) {
+async function callOpenAI(messages: any[], signal: AbortSignal, retryCount = 0, model?: string) {
+  const chosenModel = model || process.env.OPENAI_MODEL || "gpt-4o-mini";
   try {
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model: chosenModel,
       messages,
       response_format: { type: "json_object" },
     }, { signal });
@@ -28,10 +30,15 @@ async function callOpenAI(messages: any[], signal: AbortSignal, retryCount = 0) 
 
     return JSON.parse(content);
   } catch (error: any) {
+    // Fallback for unsupported model (e.g., gpt-5 placeholder) -> retry with gpt-4o-mini once
+    const unsupported = (error?.error?.message || error?.message || '').toLowerCase().includes('not found');
+    if(unsupported && chosenModel !== 'gpt-4o-mini') {
+      return callOpenAI(messages, signal, retryCount, 'gpt-4o-mini');
+    }
     if (error.status === 429 || (error.status >= 500 && error.status < 600)) {
       if (retryCount < MAX_RETRIES) {
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * Math.pow(2, retryCount)));
-        return callOpenAI(messages, signal, retryCount + 1);
+        return callOpenAI(messages, signal, retryCount + 1, chosenModel);
       }
     }
     throw error;
@@ -41,10 +48,11 @@ async function callOpenAI(messages: any[], signal: AbortSignal, retryCount = 0) 
 export async function POST(req: Request) {
   const ac = new AbortController();
   const timeout = setTimeout(() => ac.abort(), TIMEOUT);
+  const requestStart = Date.now();
 
   try {
     const body = await req.json();
-    const { 
+  const { 
       hebrew, 
       roughEnglish, 
       style, 
@@ -62,6 +70,53 @@ export async function POST(req: Request) {
       mode = "standard"
     } = body;
 
+    // Demo mode - return mock translation
+  // Demo mode only if explicitly enabled AND no real API key present
+  if (process.env.DEMO_MODE === 'true' && !process.env.OPENAI_API_KEY) {
+      const srcLangNorm = (sourceLanguage || '').toLowerCase();
+      const tgtLangNorm = (targetLanguage || '').toLowerCase();
+      const sourceText = srcLangNorm.includes('hebrew') ? hebrew : roughEnglish;
+
+      let mockTranslation;
+      if (srcLangNorm.includes('english') && tgtLangNorm.includes('hebrew')) {
+        // English to Hebrew demo (simple word mapping)
+        mockTranslation = "" + (roughEnglish || body.sourceText || 'Hello world').replace(/Hello world/i,'שלום עולם');
+      } else if (srcLangNorm.includes('hebrew') && tgtLangNorm.includes('english')) {
+        // Hebrew to English demo with naive dictionary so output reflects input
+        const dict: Record<string,string> = {
+          'שלום':'Hello',
+          'עולם':'world',
+          'זהו':'This is',
+          'זה':'This',
+          'מסמך':'a document',
+          'בדיקה':'test',
+          'למערכת':'for the system',
+          'התרגום':'the translation',
+          'שלנו':'our'
+        };
+        const tokens = (sourceText || '').split(/([\s,.!?:;]+)/);
+        const translated = tokens.map((t: string)=> {
+          const bare = t.replace(/[,.!?:;]/g,'');
+            if(dict[bare]) {
+              const punct = /[,.!?:;]/.test(t) ? (t.match(/[,.!?:;]/) || [''])[0] : '';
+              return dict[bare] + punct;
+            }
+            return t;
+        }).join('').replace(/\s+/g,' ').trim();
+        mockTranslation = translated || "Demo translation output - " + (sourceText || 'sample text').slice(0,50) + '...';
+      } else {
+        // Default mock
+        const text = sourceText || body.sourceText || "sample text";
+        mockTranslation = "Demo translation output - " + text.slice(0, 50) + "...";
+      }
+
+      return NextResponse.json({
+        edited_text: mockTranslation,
+        notes: "Demo mode: Naive local translation for testing (set DEMO_MODE=false + OPENAI_API_KEY for real).",
+        audience_version: mode.startsWith('audience') ? mockTranslation + " (adapted for audience)" : undefined
+      });
+    }
+
     // Determine source text based on language selection
     const sourceText = sourceLanguage === 'hebrew' ? hebrew : roughEnglish;
     
@@ -77,8 +132,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid glossary format" }, { status: 400 });
     }
 
-    // Override model if provided in request
-    if (model) process.env.OPENAI_MODEL = model;
+  // Always prefer explicit request model else default to gpt-5 (user requirement)
+  process.env.OPENAI_MODEL = model || 'gpt-5';
 
     // Build enforcement prompt if this is a retry with banned terms
     let enforcementPrompt = "";
@@ -103,7 +158,7 @@ export async function POST(req: Request) {
       mode
     });
 
-    const response = await callOpenAI(messages, ac.signal);
+  const response = await callOpenAI(messages, ac.signal);
     const validated = parseEditPayload(response);
 
     // If minimalChanges mode requested, generate explicit span-based change_log if missing or incomplete
@@ -149,7 +204,8 @@ export async function POST(req: Request) {
     console.error("API Error:", err);
     
     if (err.name === "AbortError") {
-      return NextResponse.json({ error: "Request timeout" }, { status: 408 });
+      const abortedByUser = ac.signal.aborted && Date.now() - requestStart < TIMEOUT - 1000;
+      return NextResponse.json({ error: abortedByUser ? "Request aborted by client" : "Request timeout" }, { status: 408 });
     }
     
     if (err.status === 429) {

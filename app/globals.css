@@ -220,6 +220,13 @@ textarea, input, select {
 .tc-delete { background: rgba(239,68,68,0.25); text-decoration: line-through; opacity: 0.8; }
 .tc-pending-outline { outline: 1px dashed var(--accent); }
 
+/* Glossary Highlight Styles */
+.glossary-term { background: rgba(59,130,246,0.18); box-shadow: 0 0 0 1px rgba(59,130,246,0.5) inset; }
+.glossary-missing { background: rgba(234,179,8,0.25); box-shadow: 0 0 0 1px rgba(234,179,8,0.6) inset; position: relative; }
+.glossary-mismatch { background: rgba(244,63,94,0.25); box-shadow: 0 0 0 1px rgba(244,63,94,0.6) inset; position: relative; }
+.glossary-missing::after, .glossary-mismatch::after { content: attr(data-tip); position: absolute; left: 0; bottom: 100%; transform: translateY(-2px); background: var(--panel); color: var(--text); padding: 2px 4px; font-size: 10px; border: 1px solid var(--border); border-radius: 3px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.glossary-missing:hover::after, .glossary-mismatch:hover::after { opacity: 1; }
+
 /* Enhanced button styles for better UI */
 .btn-primary {
   @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;
@@ -243,3 +250,9 @@ button:focus-visible {
 .pulse-subtle {
   animation: pulse-subtle 2s infinite;
 }
+
+/* Alignment tiers */
+.align-good { background: rgba(59,130,246,0.12); border-left: 3px solid rgba(59,130,246,0.6); }
+.align-fuzzy { background: rgba(234,179,8,0.18); border-left: 3px solid rgba(234,179,8,0.6); }
+.align-poor { background: rgba(244,63,94,0.18); border-left: 3px solid rgba(244,63,94,0.6); }
+.align-unmatched { background: rgba(107,114,128,0.15); border-left: 3px solid rgba(107,114,128,0.5); opacity: 0.85; }

@@ -23,6 +23,10 @@ import type { Theme } from "@/components/ThemeSelector";
 
 export default function Page() {
   const { toasts, addToast } = useToasts();
+  
+  // Add navigation state
+  const [showWelcome, setShowWelcome] = useState(true);
+  
   const [hebrew, setHebrew] = useState("");
   const [roughEnglish, setRoughEnglish] = useState("");
   const [model, setModel] = useState("gpt-5-mini");
@@ -430,6 +434,30 @@ export default function Page() {
 
   return (
     <div className="h-screen flex">
+      {showWelcome && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg max-w-md mx-4">
+            <h1 className="text-2xl font-bold mb-6 text-center">Translation Chat</h1>
+            <div className="space-y-4">
+              <button
+                onClick={() => window.location.href = '/documents'}
+                className="w-full p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-left"
+              >
+                <div className="font-semibold">📄 Document Mode (Recommended)</div>
+                <div className="text-sm opacity-90">Full-featured document translation with version control, track changes, alignment, and export</div>
+              </button>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg text-left"
+              >
+                <div className="font-semibold">⚡ Quick Mode</div>
+                <div className="text-sm opacity-70">Simple translation interface</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Draggable title bar area for Electron - larger area for macOS window controls */}
       <div className="drag-region h-12 w-full absolute top-0 left-0 z-50 pointer-events-none" />
       

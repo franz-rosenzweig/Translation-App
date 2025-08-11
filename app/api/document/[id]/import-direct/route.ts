@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if(useDb) {
       const doc = await repo.getDocument(id);
       if(!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-      const v = await repo.createVersion(id, 'direct', content, doc.directTranslationVersionId, { imported: true });
+      const v = await repo.createVersion(id, 'direct', content, doc.directTranslationVersionId || undefined, { imported: true });
       return NextResponse.json({ version: v });
     } else {
       const doc = getDocument(id);

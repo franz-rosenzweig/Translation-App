@@ -608,7 +608,7 @@ Phase 1
 
 Phase 2
 [x] Sentence segmentation & alignment (heuristic splitter + alignment route)
-[ ] Embedding microservice (stub only – not deployed)
+[x] Embedding microservice client & fallback (REMOTE via EMBEDDINGS_ENDPOINT, local pseudo-vector fallback)
 [x] Alignment UI panel
 [x] Rephrase with audience form
 [x] Revision history view
@@ -620,17 +620,17 @@ Phase 3
 
 Phase 4
 [x] Glossary CRUD (list + replace endpoints)
-[ ] Glossary enforcement + warnings panel (backend check endpoint present; UI pending)
-[ ] Export DOCX/PDF (DOCX implemented; PDF pending)
+[x] Glossary enforcement + warnings panel (backend check + UI panel)
+[x] Export DOCX/PDF (DOCX + PDF implemented)
 
 Phase 5
 [ ] Analytics dashboard
 [ ] Advanced QA (NER, entity consistency)
 
 Progress Notes:
-- Completed Phases 1 & 2 (except embedding microservice). 
-- Phase 3 track changes delivered (without realtime Yjs). 
-- Phase 4 partially underway: glossary endpoints + check + DOCX export done; UI warnings panel and PDF export outstanding.
+ - Completed Phases 1 & 2 (embedding client now implemented with remote + fallback). 
+ - Phase 3 track changes delivered (without realtime Yjs). 
+ - Phase 4 completed (glossary warnings panel + PDF export added).
 
 ---
 

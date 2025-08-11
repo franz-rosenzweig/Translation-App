@@ -59,12 +59,20 @@ export const TrackChangesExtension = Extension.create<{ getChanges: () => Change
         props: {
           decorations: (state) => recompute(state.doc)
         },
-        view: () => ({
-          update: (view) => {
-            // Trigger recompute when external changes array length/status changes.
-            view.dispatch(view.state.tr.setMeta('trackChanges:update', true));
-          }
-        })
+        view: () => {
+          let lastChangesLength = 0;
+          return {
+            update: (view) => {
+              // Only trigger recompute when external changes array length actually changes
+              const currentChanges = getChanges();
+              const currentLength = currentChanges ? currentChanges.length : 0;
+              if (currentLength !== lastChangesLength) {
+                lastChangesLength = currentLength;
+                view.dispatch(view.state.tr.setMeta('trackChanges:update', true));
+              }
+            }
+          };
+        }
       })
     ];
   },

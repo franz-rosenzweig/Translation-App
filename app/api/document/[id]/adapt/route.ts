@@ -7,7 +7,7 @@ const useDb = process.env.FEATURE_DB === '1';
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await req.json().catch(()=>({}));
-    const { audience = 'General', style = 'neutral', knobs = {}, guidelines = '', referenceMaterial = '', promptOverride = '', sourceLanguage = 'hebrew', targetLanguage = 'english' } = body;
+  const { audience = 'General', style = 'neutral', knobs = {}, guidelines = '', referenceMaterial = '', promptOverride = '', sourceLanguage = 'hebrew', targetLanguage = 'english', bannedTerms = [], maxInputLength } = body;
     const doc: any = useDb ? await repo.getDocument(params.id) : getDocument(params.id);
     if(!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -16,8 +16,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if(useDb) {
       try { glossaryTerms = await repo.listGlossary(doc.id); } catch(e) { console.warn('Glossary fetch failed', e); }
     }
-    let adapted = '';
-    let meta: any = { audience, style, knobs, baseVersionId: doc.currentDirectVersionId };
+  let adapted = '';
+  let meta: any = { audience, style, knobs, baseVersionId: doc.currentDirectVersionId };
     const canCallLLM = !!process.env.OPENAI_API_KEY;
     const minimalChanges = !!(knobs as any)?.minimalChanges;
     let change_log: any[] | undefined;
@@ -69,6 +69,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       meta.fallback = true;
     }
 
+    // Guardrails evaluation (post generation) if banned terms provided
+    if((bannedTerms && bannedTerms.length) || maxInputLength) {
+      try {
+        const { checkGuardrails } = await import('@/lib/guardrails');
+        const res = checkGuardrails(adapted, { bannedTerms, maxInputLength });
+        meta.guardrails = res;
+      } catch(e) { /* ignore guardrails errors */ }
+    }
+
     const version = useDb
       ? await repo.createVersion(doc.id, 'adapted', adapted, doc.currentAdaptedVersionId, meta)
       : createVersion(doc.id, 'adapted', adapted, doc.currentAdaptedVersionId, meta);
@@ -97,7 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       // @ts-ignore
       doc.currentAdaptedVersionId = version.id;
     }
-  return NextResponse.json({ version, adaptedText: adapted, change_log });
+  return NextResponse.json({ version, adaptedText: adapted, change_log, guardrails: (version.meta as any)?.guardrails });
   } catch (e:any) {
     console.error(e);
     return NextResponse.json({ error: e.message || 'Server error' }, { status: 500 });

@@ -56,7 +56,8 @@ export function composePrompt({
 }: {
   hebrew: string;
   roughEnglish: string;
-  style?: string;
+  // style may be either a simple label OR the toggles object from UI
+  style?: string | { preserveParagraphs?: boolean; shorterSentences?: boolean; plainVerbs?: boolean };
   promptOverride?: string;
   knobs?: Record<string, unknown>;
   glossary?: Array<{ hebrew: string; chosen_english: string; note?: string }>;
@@ -84,6 +85,16 @@ BUT it must not introduce factual content absent from the source. Provide concis
 If mode is audience-only, you may omit change_log and other arrays except flags if needed, but must still return edited_text (can mirror audience_version.text if only one is relevant for JSON schema stability).`
     : '';
 
+  // Paragraphing & style toggles (if style passed as object from UI)
+  let paragraphingDirective = "";
+  if (style && typeof style === 'object') {
+    const { preserveParagraphs, shorterSentences, plainVerbs } = style as any;
+  paragraphingDirective = `\n\nPARAGRAPHING & STYLE DIRECTIVES (CRITICAL):\n- Absolutely ensure paragraphs in edited_text are separated by EXACTLY one blank line (two '\\n' characters). No paragraph should span unrelated ideas.\n- A paragraph = tightly unified idea cluster. If the source paragraph crams multiple distinct ideas or exceeds ~6 sentences, split it.\n- ${preserveParagraphs ? 'Preserve existing paragraph boundaries unless splitting clearly improves clarity (e.g., very long or multi-topic).' : 'Re-paragraph freely to improve clarity and flow while preserving logical order.'}\n- ${shorterSentences ? 'Aggressively split overlong sentences (>25 words OR 3+ clauses) into shorter, clear sentences.' : 'Only split sentences when clarity measurably improves; avoid unnecessary fragmentation.'}\n- ${plainVerbs ? 'Prefer concrete, plain, active verbs. Reduce nominalizations (e.g., "implementation of" -> "implement").' : 'Retain stylistic verb nuance where valuable.'}\n- Do NOT add or remove facts. Maintain one-to-one informational fidelity while adjusting form.\n- Enforce: No double blank lines beyond the single separator, and no trailing blank line at end.\n- Output must already contain the desired paragraphing; do NOT instruct the user—JUST produce final text.\n- If target language is Hebrew, still follow blank-line separation using standard newline characters.`;
+  } else if (typeof style === 'string' && style !== 'default') {
+    // Retain legacy simple style tag
+    paragraphingDirective = `\n\nStyle Tag: ${style}`;
+  }
+
   const messages = [
     {
       role: "system" as const,
@@ -91,7 +102,7 @@ If mode is audience-only, you may omit change_log and other arrays except flags 
         baseSystemPrompt,
         guidelines ? `\n\nTranslation Guidelines:\n${guidelines}` : "",
         referenceMaterial ? `\n\nSTYLE REFERENCE MATERIAL (IMPORTANT - Use these examples to match writing style and tone):\n${referenceMaterial.substring(0, 3000)}${referenceMaterial.length > 3000 ? '\n\n[Reference material truncated for length. Focus on the patterns and style shown above.]' : ''}\n\nPay close attention to the writing style, sentence structure, vocabulary choices, and tone in the reference material above. Match this style in your edited translation.` : "",
-        style !== "default" ? `Style: ${style}` : "",
+        paragraphingDirective,
         glossary.length ? `Glossary terms: ${JSON.stringify(glossary)}` : "",
     Object.keys(knobs).length ? `\n\nTRANSLATION INTENSITY SETTINGS (1=minimal, 10=maximum):\n${Object.entries(knobs).map(([key, value]) => {
           const numValue = Number(value);

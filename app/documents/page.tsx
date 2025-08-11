@@ -6,7 +6,8 @@ interface DocDTO { id: string; title: string; sourceLanguage: string; targetLang
 
 export default function DocumentsPage() {
   const [docs, setDocs] = useState<DocDTO[]>([]);
-  const [form, setForm] = useState({ title: '', sourceLanguage: 'he', targetLanguage: 'en', sourceText: '' });
+  // Use full language identifiers matching /api/process expectations
+  const [form, setForm] = useState({ title: '', sourceLanguage: 'hebrew', targetLanguage: 'english', sourceText: '' });
   const [creating, setCreating] = useState(false);
 
   async function load() {
@@ -29,19 +30,19 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="min-h-screen p-6 space-y-8 overflow-auto">
       <h1 className="text-2xl font-semibold">Documents</h1>
       <form onSubmit={create} className="space-y-3 max-w-xl">
         <input className="w-full rounded border border-default px-3 py-2 bg-panel" placeholder="Title (optional)" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} />
         <div className="flex gap-3">
           <select className="border border-default rounded px-2 py-1 bg-panel" value={form.sourceLanguage} onChange={e=>setForm(f=>({...f,sourceLanguage:e.target.value}))}>
-            <option value="he">Hebrew</option>
-            <option value="en">English</option>
+            <option value="hebrew">Hebrew</option>
+            <option value="english">English</option>
           </select>
           <span className="self-center">→</span>
           <select className="border border-default rounded px-2 py-1 bg-panel" value={form.targetLanguage} onChange={e=>setForm(f=>({...f,targetLanguage:e.target.value}))}>
-            <option value="en">English</option>
-            <option value="he">Hebrew</option>
+            <option value="english">English</option>
+            <option value="hebrew">Hebrew</option>
           </select>
         </div>
         <textarea className="w-full h-40 rounded border border-default px-3 py-2 font-mono text-sm bg-panel" placeholder="Paste source text…" value={form.sourceText} onChange={e=>setForm(f=>({...f,sourceText:e.target.value}))} required />
@@ -49,7 +50,7 @@ export default function DocumentsPage() {
           {creating ? 'Creating…' : 'Create Document'}
         </button>
       </form>
-      <div className="space-y-2">
+      <div className="space-y-2 pb-8">
         {docs.map(d => (
           <Link key={d.id} href={`/documents/${d.id}`} className="block border border-default rounded px-4 py-3 hover:bg-accent/10 transition-colors">
             <div className="font-medium">{d.title || 'Untitled'}</div>

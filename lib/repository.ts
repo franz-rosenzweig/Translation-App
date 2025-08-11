@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const repo = {
   async createDocument(input: { title?: string; sourceLanguage: string; targetLanguage: string; sourceText: string; }) {
-    return prisma.$transaction(async (tx: PrismaClient) => {
+    return prisma.$transaction(async (tx: any) => {
       const doc = await tx.document.create({
         data: {
           title: input.title || '',
@@ -61,9 +61,12 @@ export const repo = {
   updateTrackedChangeStatus(id: string, status: string) {
     return prisma.trackedChange.update({ where: { id }, data: { status } });
   },
+  getTrackedChange(id: string) {
+    return prisma.trackedChange.findUnique({ where: { id } });
+  },
   // Glossary
   upsertGlossary(documentId: string, terms: Array<{ hebrew: string; chosenEnglish: string; note?: string }>) {
-    return prisma.$transaction(async (tx: PrismaClient) => {
+    return prisma.$transaction(async (tx: any) => {
       await tx.glossaryTerm.deleteMany({ where: { documentId } });
       if(terms.length) {
         await tx.glossaryTerm.createMany({ data: terms.map(t => ({ documentId, hebrew: t.hebrew, chosenEnglish: t.chosenEnglish, note: t.note })) });
