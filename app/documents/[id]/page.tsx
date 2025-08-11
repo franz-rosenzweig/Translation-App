@@ -5,6 +5,7 @@ import { diffWords } from '@/lib/diff';
 import { langDir } from '@/lib/langDir';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { TrackChangesExtension } from '@/lib/trackChangesExtension';
 
 interface Doc {
   id: string;
@@ -34,6 +35,8 @@ export default function DocumentWorkspace() {
   const [showVersions, setShowVersions] = useState(true);
   const [selectedDiffBase, setSelectedDiffBase] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all'|'adapted'|'direct'>('all');
+  const [minimalMode, setMinimalMode] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState<any[]>([]);
   const autosaveTimer = useRef<any>(null);
 
   const load = useCallback(async () => {
@@ -54,7 +57,7 @@ export default function DocumentWorkspace() {
 
   // TipTap editor setup
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, TrackChangesExtension.configure({ getChanges: () => pendingChanges })],
     editable: mode === 'edit',
     content: adaptedDraft || '',
     onUpdate: ({ editor }) => {
@@ -212,6 +215,7 @@ export default function DocumentWorkspace() {
             <option value="ltr">Dir: LTR</option>
             <option value="rtl">Dir: RTL</option>
           </select>
+          <label className="flex items-center gap-1 text-[10px]"><input type="checkbox" checked={minimalMode} onChange={e=>setMinimalMode(e.target.checked)} /> Minimal</label>
           <button onClick={()=>save(true)} disabled={saving} className="px-3 py-1 rounded bg-accent text-accent-foreground disabled:opacity-50">{saving? 'Saving…':'Save'}</button>
           <button onClick={generateDirect} disabled={generatingDirect} className="px-3 py-1 rounded bg-indigo-600 text-white text-xs disabled:opacity-50">{generatingDirect ? 'Generating…' : 'Generate Direct'}</button>
         </div>
@@ -288,6 +292,20 @@ export default function DocumentWorkspace() {
               <div className={`editor-wrapper border rounded h-full ${mode!=='edit' ? 'pointer-events-none opacity-70':''}`}> 
                 <EditorContent editor={editor} />
               </div>
+              {minimalMode && pendingChanges.length>0 && (
+                <div className="mt-2 border-t pt-2 space-y-1 text-[11px]">
+                  <div className="font-semibold flex items-center justify-between">Pending Changes <span>{pendingChanges.length}</span></div>
+                  {pendingChanges.map(ch => (
+                    <div key={ch.id} className="border rounded p-1 flex flex-col gap-1">
+                      <div className="flex gap-2 text-[10px]"><span className="uppercase font-medium">{ch.type}</span><span>{ch.before?.slice(0,30)}</span> → <span>{ch.after?.slice(0,30)}</span></div>
+                      <div className="flex gap-2">
+                        <button className="px-2 py-0.5 border rounded" onClick={()=>{/* accept placeholder */}}>Accept</button>
+                        <button className="px-2 py-0.5 border rounded" onClick={()=>{/* reject placeholder */}}>Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -215,6 +215,11 @@ textarea, input, select {
   scroll-behavior: auto;
 }
 
+/* Track Changes Styles */
+.tc-insert { background: rgba(16,185,129,0.25); border-bottom: 1px solid rgba(16,185,129,0.8); }
+.tc-delete { background: rgba(239,68,68,0.25); text-decoration: line-through; opacity: 0.8; }
+.tc-pending-outline { outline: 1px dashed var(--accent); }
+
 /* Enhanced button styles for better UI */
 .btn-primary {
   @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg;

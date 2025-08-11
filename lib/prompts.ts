@@ -80,9 +80,6 @@ export function composePrompt({
   // Audience adaptation instructions
   const audienceAddendum = mode.startsWith("audience")
     ? `\n\nAUDIENCE ADAPTATION REQUEST: In addition to (or instead of in audience-only mode) the faithful edited_text, produce an "audience_version" that is deliberately optimized for the INTENDED AUDIENCE derived from: guidelines, reference material style signals, and override directives. This version may:
-- Restructure for narrative flow
-- Adjust tone, emotional resonance, pacing, and idiom
-- Strengthen cohesion and voice
 BUT it must not introduce factual content absent from the source. Provide concise rationale in audience_version.rationale.
 If mode is audience-only, you may omit change_log and other arrays except flags if needed, but must still return edited_text (can mirror audience_version.text if only one is relevant for JSON schema stability).`
     : '';
@@ -96,7 +93,7 @@ If mode is audience-only, you may omit change_log and other arrays except flags 
         referenceMaterial ? `\n\nSTYLE REFERENCE MATERIAL (IMPORTANT - Use these examples to match writing style and tone):\n${referenceMaterial.substring(0, 3000)}${referenceMaterial.length > 3000 ? '\n\n[Reference material truncated for length. Focus on the patterns and style shown above.]' : ''}\n\nPay close attention to the writing style, sentence structure, vocabulary choices, and tone in the reference material above. Match this style in your edited translation.` : "",
         style !== "default" ? `Style: ${style}` : "",
         glossary.length ? `Glossary terms: ${JSON.stringify(glossary)}` : "",
-        Object.keys(knobs).length ? `\n\nTRANSLATION INTENSITY SETTINGS (1=minimal, 10=maximum):\n${Object.entries(knobs).map(([key, value]) => {
+    Object.keys(knobs).length ? `\n\nTRANSLATION INTENSITY SETTINGS (1=minimal, 10=maximum):\n${Object.entries(knobs).map(([key, value]) => {
           const numValue = Number(value);
           
           // Handle cultural adaptation based on translation direction
@@ -123,6 +120,7 @@ If mode is audience-only, you may omit change_log and other arrays except flags 
             default: return `${key}: ${value}`;
           }
         }).join('\n')}` : "",
+    knobs && (knobs as any).minimalChanges ? `\n\nMINIMAL CHANGE MODE ENABLED: Only adjust wording where it clearly improves clarity, idiom, accuracy, or tone. Preserve all unchanged segments verbatim. Avoid broad rewrites or reordering. Provide concise change_log entries ONLY for modified spans.` : "",
         `Translation direction: ${sourceLanguage} → ${targetLanguage}`,
         audienceAddendum,
         historyContext,

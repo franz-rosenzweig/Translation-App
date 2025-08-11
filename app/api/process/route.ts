@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { parseEditPayload } from "@/lib/zod";
 import { editSchema } from "@/lib/schema";
 import { composePrompt } from "@/lib/prompts";
+import { diff_match_patch } from 'diff-match-patch';
 import { buildReEnforcementPrompt } from "@/lib/guardrails";
 
 // Initialize OpenAI client
@@ -104,6 +105,34 @@ export async function POST(req: Request) {
 
     const response = await callOpenAI(messages, ac.signal);
     const validated = parseEditPayload(response);
+
+    // If minimalChanges mode requested, generate explicit span-based change_log if missing or incomplete
+    if(knobs && (knobs as any).minimalChanges) {
+      try {
+        const baseline = sourceLanguage === 'hebrew' ? (roughEnglish || '') : (hebrew || '');
+        if(baseline && validated.edited_text) {
+          const dmp = new diff_match_patch();
+          const diffs = dmp.diff_main(baseline, validated.edited_text);
+          dmp.diff_cleanupSemantic(diffs);
+          const changes: any[] = [];
+          let cursorBase = 0; let cursorNew = 0;
+          diffs.forEach((d: [number, string]) => {
+            const [op, text] = d;
+            if(op === 0) { cursorBase += text.length; cursorNew += text.length; return; }
+            if(op === -1) { // deletion
+              changes.push({ type: 'delete', before: text, after: '', start: cursorBase, end: cursorBase + text.length });
+              cursorBase += text.length;
+            } else if(op === 1) { // insertion
+              changes.push({ type: 'insert', before: '', after: text, start: cursorBase, end: cursorBase });
+              cursorNew += text.length;
+            }
+          });
+          validated.change_log = (validated.change_log || []).concat(changes.slice(0,200));
+        }
+      } catch(e) {
+        console.warn('Minimal change span generation failed', e);
+      }
+    }
 
     // Log when audience mode is used (dev only)
     if (process.env.NODE_ENV === 'development' && mode !== 'standard') {
