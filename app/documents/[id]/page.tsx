@@ -1,11 +1,20 @@
 'use client';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { diffWords } from '@/lib/diff';
 import { langDir } from '@/lib/langDir';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 
 interface Doc {
-  id: string; title: string; sourceLanguage: string; targetLanguage: string; sourceText: string; directTranslation?: string; adaptedText?: string;
+  id: string;
+  title: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  sourceText: string;
+  directTranslation?: string;
+  adaptedText?: string;
+  currentAdaptedVersionId?: string;
 }
 
 export default function DocumentWorkspace() {
@@ -21,6 +30,10 @@ export default function DocumentWorkspace() {
   const [loadingAlignment, setLoadingAlignment] = useState(false);
   const [audience, setAudience] = useState('General');
   const [rtlOverride, setRtlOverride] = useState<'auto'|'rtl'|'ltr'>('auto');
+  const [versions, setVersions] = useState<any[]>([]);
+  const [showVersions, setShowVersions] = useState(true);
+  const [selectedDiffBase, setSelectedDiffBase] = useState<string | null>(null);
+  const autosaveTimer = useRef<any>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/document/${id}`);
@@ -38,20 +51,50 @@ export default function DocumentWorkspace() {
     return langDir(doc?.targetLanguage || 'en');
   }, [doc, rtlOverride]);
 
-  async function save() {
+  // TipTap editor setup
+  const editor = useEditor({
+    extensions: [StarterKit],
+    editable: mode === 'edit',
+    content: adaptedDraft || '',
+    onUpdate: ({ editor }) => {
+      const text = editor.getHTML();
+      setAdaptedDraft(text);
+    }
+  }, [mode]);
+
+  useEffect(()=>{ if(editor && editor.getHTML() !== adaptedDraft) editor.commands.setContent(adaptedDraft); }, [adaptedDraft, editor]);
+
+  async function save(manual = false) {
     if(!doc) return;
     setSaving(true);
-    const res = await fetch(`/api/document/${doc.id}`, { method: 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ adaptedText: adaptedDraft }) });
+    // Create a new adapted version instead of patch (works for DB and memory)
+    const res = await fetch(`/api/document/${doc.id}/versions`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ type: 'adapted', content: adaptedDraft, parentVersionId: doc.currentAdaptedVersionId, meta: { autosave: !manual } }) });
     const data = await res.json();
     setSaving(false);
-    if(data.document) setDoc(data.document);
+    if(data.version) {
+      // refresh versions
+      fetchVersions();
+      setDoc(d => d ? { ...d, adaptedText: adaptedDraft, currentAdaptedVersionId: data.version.id } : d);
+    }
   }
+
+  // Debounced autosave
+  useEffect(()=> {
+    if(mode !== 'edit') return;
+    if(!doc) return;
+    if(autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(()=> {
+      if(adaptedDraft && adaptedDraft !== doc.adaptedText) save(false);
+    }, 2000);
+    return () => { if(autosaveTimer.current) clearTimeout(autosaveTimer.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adaptedDraft, doc?.id]);
 
   async function generateDirect() {
     if(!doc) return;
     // Placeholder: In real implementation call translation pipeline
     setGeneratingDirect(true);
-    const res = await fetch(`/api/document/${doc.id}/translate`, { method: 'POST' });
+    const res = await fetch(`/api/document/${doc.id}/translate`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ sourceLanguage: doc.sourceLanguage, targetLanguage: doc.targetLanguage }) });
     const data = await res.json();
     setGeneratingDirect(false);
     if(data.document){
@@ -63,12 +106,13 @@ export default function DocumentWorkspace() {
   async function adapt() {
     if(!doc) return;
     setAdapting(true);
-    const res = await fetch(`/api/document/${doc.id}/adapt`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ audience }) });
+    const res = await fetch(`/api/document/${doc.id}/adapt`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ audience, sourceLanguage: doc.sourceLanguage, targetLanguage: doc.targetLanguage }) });
     const data = await res.json();
     setAdapting(false);
     if(data.adaptedText) {
       setDoc(d => d ? { ...d, adaptedText: data.adaptedText } : d);
       setAdaptedDraft(data.adaptedText);
+      fetchVersions();
     }
   }
 
@@ -82,9 +126,14 @@ export default function DocumentWorkspace() {
   }
 
   const diffOps = useMemo(()=>{
-    if(mode !== 'diff' || !doc?.directTranslation) return [];
-    return diffWords(doc.directTranslation, adaptedDraft);
-  }, [mode, doc?.directTranslation, adaptedDraft]);
+    if(mode !== 'diff') return [];
+    let base = doc?.directTranslation || '';
+    if(selectedDiffBase) {
+      const v = versions.find(v=>v.id===selectedDiffBase);
+      if(v) base = v.content;
+    }
+    return base ? diffWords(base, adaptedDraft) : [];
+  }, [mode, doc?.directTranslation, adaptedDraft, selectedDiffBase, versions]);
 
   useEffect(()=> {
     if(mode === 'align') loadAlignment();
@@ -103,6 +152,15 @@ export default function DocumentWorkspace() {
       </div>
     );
   }
+
+  async function fetchVersions() {
+    if(!id) return;
+    const res = await fetch(`/api/document/${id}/versions`);
+    const data = await res.json();
+    if(data.versions) setVersions(data.versions);
+  }
+
+  useEffect(()=> { fetchVersions(); }, [id]);
 
   if(!doc) return <div className="p-6">Loading…</div>;
 
@@ -123,12 +181,31 @@ export default function DocumentWorkspace() {
             <option value="ltr">Dir: LTR</option>
             <option value="rtl">Dir: RTL</option>
           </select>
-          <button onClick={save} disabled={saving} className="px-3 py-1 rounded bg-accent text-accent-foreground disabled:opacity-50">{saving? 'Saving…':'Save'}</button>
+          <button onClick={()=>save(true)} disabled={saving} className="px-3 py-1 rounded bg-accent text-accent-foreground disabled:opacity-50">{saving? 'Saving…':'Save'}</button>
           <button onClick={generateDirect} disabled={generatingDirect} className="px-3 py-1 rounded bg-indigo-600 text-white text-xs disabled:opacity-50">{generatingDirect ? 'Generating…' : 'Generate Direct'}</button>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-4 flex-1 overflow-hidden">
-        <div className="flex flex-col overflow-hidden border border-default rounded">
+        <div className="flex flex-col overflow-hidden border border-default rounded relative">
+          {showVersions && (
+            <div className="absolute left-full top-0 ml-2 w-64 h-full border border-default rounded bg-panel flex flex-col">
+              <div className="px-3 py-2 text-xs font-semibold border-b border-default flex items-center justify-between">Versions
+                <button className="text-[10px] underline" onClick={()=>fetchVersions()}>Refresh</button>
+              </div>
+              <div className="flex-1 overflow-auto text-[11px] divide-y divide-default/40">
+                {versions.slice().reverse().map(v => (
+                  <button key={v.id} className={`w-full text-left px-2 py-1 hover:bg-muted/40 ${selectedDiffBase===v.id ? 'bg-accent/30' : ''}`} onClick={()=> setSelectedDiffBase(v.id)}>
+                    <div className="font-medium">{v.type}</div>
+                    <div className="opacity-70 truncate">{new Date(v.createdAt).toLocaleTimeString()}</div>
+                  </button>
+                ))}
+                {versions.length===0 && <div className="p-2 text-muted">No versions.</div>}
+              </div>
+              <div className="p-2 border-t border-default">
+                <button className="w-full text-[11px] border rounded px-2 py-1" onClick={()=>setShowVersions(false)}>Hide</button>
+              </div>
+            </div>
+          )}
           <div className="px-3 py-2 text-xs font-semibold border-b border-default bg-muted/30">Source ({doc.sourceLanguage})</div>
           <div dir={langDir(doc.sourceLanguage)} className="p-3 overflow-auto text-sm whitespace-pre-wrap leading-relaxed font-mono" style={{fontFamily:'monospace'}}>{doc.sourceText}</div>
         </div>
@@ -151,7 +228,15 @@ export default function DocumentWorkspace() {
               {!loadingAlignment && alignment.length === 0 && <div className="text-muted">No alignment available</div>}
             </div>
           ) : (
-            <textarea dir={direction} className="flex-1 p-3 outline-none bg-transparent resize-none text-sm leading-relaxed" style={{ direction }} value={adaptedDraft} onChange={e=>setAdaptedDraft(e.target.value)} />
+            <div className="flex-1 p-2 overflow-auto">
+              <div className="flex items-center justify-between mb-1">
+                <button onClick={()=>setShowVersions(s=>!s)} className="text-[10px] underline">{showVersions? 'Hide versions':'Show versions'}</button>
+                <button onClick={()=>save(true)} disabled={saving} className="text-[10px] border rounded px-2 py-0.5 disabled:opacity-50">{saving? 'Saving…':'Manual Save'}</button>
+              </div>
+              <div className={`editor-wrapper border rounded h-full ${mode!=='edit' ? 'pointer-events-none opacity-70':''}`}> 
+                <EditorContent editor={editor} />
+              </div>
+            </div>
           )}
         </div>
         <div className="flex flex-col overflow-hidden border border-default rounded">
