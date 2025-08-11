@@ -33,6 +33,7 @@ export default function DocumentWorkspace() {
   const [versions, setVersions] = useState<any[]>([]);
   const [showVersions, setShowVersions] = useState(true);
   const [selectedDiffBase, setSelectedDiffBase] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'all'|'adapted'|'direct'>('all');
   const autosaveTimer = useRef<any>(null);
 
   const load = useCallback(async () => {
@@ -223,9 +224,15 @@ export default function DocumentWorkspace() {
                 <button className="text-[10px] underline" onClick={()=>fetchVersions()}>Refresh</button>
               </div>
               <div className="flex-1 overflow-auto text-[11px] divide-y divide-default/40">
-                {versions.slice().reverse().map(v => {
+                <div className="p-2 flex gap-1 text-[10px]">
+                  <button className={`px-2 py-0.5 border rounded ${filterType==='all'?'bg-accent/40':''}`} onClick={()=>setFilterType('all')}>All</button>
+                  <button className={`px-2 py-0.5 border rounded ${filterType==='adapted'?'bg-accent/40':''}`} onClick={()=>setFilterType('adapted')}>Adapted</button>
+                  <button className={`px-2 py-0.5 border rounded ${filterType==='direct'?'bg-accent/40':''}`} onClick={()=>setFilterType('direct')}>Direct</button>
+                </div>
+                {versions.slice().reverse().filter(v => filterType==='all' || v.type===filterType).map(v => {
                   const snippet = (v.content || '').replace(/<[^>]+>/g,'').slice(0,60);
                   const isBase = selectedDiffBase===v.id;
+                  const meta = v.meta || {};
                   return (
                     <div key={v.id} className={`px-2 py-1 space-y-0.5 ${isBase? 'bg-accent/30' : 'hover:bg-muted/40'}`}> 
                       <div className="flex items-center justify-between">
@@ -233,6 +240,13 @@ export default function DocumentWorkspace() {
                         {v.type==='adapted' && <button className="text-[10px] underline" onClick={()=>restoreVersion(v.id)}>Restore</button>}
                       </div>
                       <div className="opacity-70 truncate">{new Date(v.createdAt).toLocaleTimeString()}</div>
+                      {(meta.audience || meta.style || meta.llmModel) && (
+                        <div className="text-[10px] opacity-60 truncate">
+                          {meta.audience && <span>A:{meta.audience} </span>}
+                          {meta.style && <span>S:{meta.style} </span>}
+                          {meta.llmModel && <span>M:{meta.llmModel}</span>}
+                        </div>
+                      )}
                       <div className="text-[10px] opacity-80 truncate">{snippet}</div>
                     </div>
                   );

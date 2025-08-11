@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDocument, alignSourceDirect } from '@/lib/documentStore';
+import { getDocument, alignSourceDirect, splitSentences } from '@/lib/documentStore';
+import { similarityMatrix } from '@/lib/embeddings';
 import { repo } from '@/lib/repository';
 const useDb = process.env.FEATURE_DB === '1';
 
@@ -10,12 +11,27 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   if(useDb && !directText && doc.directTranslationVersionId) {
     // fetch version content
     const versions = await repo.getVersions(doc.id);
-    const directV = versions.find(v=>v.id===doc.directTranslationVersionId);
+  const directV = versions.find((v:any)=>v.id===doc.directTranslationVersionId);
     directText = directV?.content;
   }
   if(!directText) return NextResponse.json({ alignment: [] });
-  const rawPairs = alignSourceDirect(doc.sourceText, directText);
-  const pairs = rawPairs.map(p => ({
+  let rawPairs;
+  if(process.env.FEATURE_EMBED_ALIGN === '1') {
+    const srcSent = splitSentences(doc.sourceText);
+    const tgtSent = splitSentences(directText);
+    const sim = await similarityMatrix(srcSent, tgtSent);
+    // Greedy matching (simplified): for each source row pick best target
+    rawPairs = srcSent.map((s, i) => {
+      let bestIdx = -1; let best = -1;
+      for(let j=0;j<tgtSent.length;j++) {
+        if(sim[i][j] > best) { best = sim[i][j]; bestIdx = j; }
+      }
+      return { sourceIndex: i, targetIndex: bestIdx, source: s, target: bestIdx>=0 ? tgtSent[bestIdx] : '', similarity: bestIdx>=0 ? best : 0 };
+    });
+  } else {
+    rawPairs = alignSourceDirect(doc.sourceText, directText);
+  }
+  const pairs = rawPairs.map((p:any) => ({
     ...p,
     tier: p.similarity >= 0.85 ? 'good' : p.similarity >= 0.6 ? 'fuzzy' : 'poor'
   }));
